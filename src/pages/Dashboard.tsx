@@ -5,22 +5,18 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-2xl font-bold mb-4">Welcome, {user?.name}</h2>
-      <div className="space-y-4">
-        <div>
-          <p className="text-gray-600">Employee ID</p>
-          <p className="font-medium">{user?.employeeId}</p>
-        </div>
-        <div>
-          <p className="text-gray-600">Email</p>
-          <p className="font-medium">{user?.email}</p>
-        </div>
-        <div>
-          <p className="text-gray-600">School</p>
-          <p className="font-medium">{user?.school}</p>
-        </div>
-      </div>
+    <div className="bg-white shadow rounded-lg p-6 ">
+      <h1 className="text-4xl font-bold mb-4 text-center">
+        Central Course Allocation System
+      </h1>
+      <h3 className='text-2xl py-4'>
+        This platform is designed to assist administrators in efficiently
+        managing course and slot allocations for faculty members at VIT Chennai.
+        With a user-friendly interface and organized workflow, admins can assign
+        courses, manage faculty preferences, and finalize slot distributions
+        with ease.
+      </h3>
+      <h2 className='text-2xl'>To proceed with course allocation, click <span className='text-green-500'>Course Allocation </span>in Navbar</h2>
     </div>
   );
 }

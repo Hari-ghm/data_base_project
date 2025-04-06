@@ -14,12 +14,8 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/*
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          */}
           <Route path="/" element={<Layout />}>
+            <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="course-allocation" element={<CourseAllocation />} />
           </Route>
