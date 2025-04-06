@@ -1,4 +1,3 @@
-import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { LogOut, BookOpen, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,7 +40,7 @@ export default function Layout() {
             </div>
             <div className="flex items-center">
               <span className="mr-4 text-sm text-gray-700">
-                Welcme, {user?.name}
+                Welcome, {user?.name}
               </span>
               <button
                 onClick={handleLogout}
