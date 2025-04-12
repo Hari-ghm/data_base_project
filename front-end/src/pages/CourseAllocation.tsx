@@ -28,29 +28,20 @@ export default function CourseAllocation() {
 
   // Mock data for demonstration
   useEffect(() => {
-    const mockCourses: Course[] = [
-      {
-        id: "1",
-        year: 2021,
-        stream: "M.Tech CSE (SE)",
-        courseType: "Core",
-        courseCode: "SWE1011",
-        courseTitle: "Soft Computing",
-        lectureHours: 3,
-        tutorialHours: 0,
-        practicalHours: 0,
-        credits: 4,
-        prerequisites: "",
-        school: "SCOPE",
-        forenoonSlots: 1,
-        afternoonSlots: 0,
-        totalSlots: 1,
-        basket: "Basket 5",
-      },
-    ];
-    setCourses(mockCourses);
-    setFilteredCourses(mockCourses);
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/courses");
+        const data: Course[] = await response.json();
+        setCourses(data);
+        setFilteredCourses(data);
+      } catch (error) {
+        console.error("❌ Failed to fetch courses:", error);
+      }
+    };
+
+    fetchCourses();
   }, []);
+
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;

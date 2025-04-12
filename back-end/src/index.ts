@@ -1,8 +1,11 @@
 import express from "express";
 import { pool } from "./db";
+import cors from "cors";
 
 const app = express();
 const port = 3001;
+
+app.use(cors());
 
 // Health check route
 app.get("/", async (req, res) => {

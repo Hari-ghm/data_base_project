@@ -39,9 +39,6 @@ export default function Layout() {
               </div>
             </div>
             <div className="flex items-center">
-              <span className="mr-4 text-sm text-gray-700">
-                Welcome, {user?.name}
-              </span>
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
