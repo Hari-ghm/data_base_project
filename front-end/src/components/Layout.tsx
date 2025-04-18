@@ -1,15 +1,7 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { LogOut, BookOpen, LayoutDashboard } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Outlet, Link} from 'react-router-dom';
+import {BookOpen, LayoutDashboard } from 'lucide-react';
 
 export default function Layout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -19,7 +11,9 @@ export default function Layout() {
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
                 <BookOpen className="h-8 w-8 text-indigo-600" />
-                <span className="ml-2 text-xl font-bold text-gray-900">Course Allocation</span>
+                <span className="ml-2 text-xl font-bold text-gray-900">
+                  Course Allocation
+                </span>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <Link
@@ -33,19 +27,17 @@ export default function Layout() {
                   to="/course-allocation"
                   className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
                 >
-                  <BookOpen className="mr-2 h-4 w-4" />
+                  <BookOpen className="mr-1 h-4 w-4" />
                   Course Allocation
                 </Link>
               </div>
-            </div>
-            <div className="flex items-center">
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              <Link
+                to="/AllocatedCourse"
+                className="inline-flex items-center px-7 pt-1 text-sm font-medium text-gray-900"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </button>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Allocated Courses
+              </Link>
             </div>
           </div>
         </div>

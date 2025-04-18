@@ -21,7 +21,7 @@ app.get("/courses", async (req, res) => {
   } catch (error) {
     console.error("🔥 Error fetching courses:", error);
     res.status(500).json({ message: "Internal Server Error" });
-  }
+  } 
 });
 
 // Start server

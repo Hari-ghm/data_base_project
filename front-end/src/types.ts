@@ -17,13 +17,6 @@ export interface Course {
   basket?: string;
 }
 
-export interface User {
-  id: string;
-  employeeId: string;
-  name: string;
-  email: string;
-  school: string;
-}
 
 export interface CourseAllocation {
   id: string;
