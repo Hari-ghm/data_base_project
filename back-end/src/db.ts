@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config({ path: __dirname + "/../touch.env" }); // adjusts for `src` folder
+dotenv.config({ path: __dirname + "/../.env" }); // adjusts for `src` folder
 
 import { Pool } from "pg";
 
