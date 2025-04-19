@@ -19,26 +19,25 @@ export default function CourseAllocation() {
   const [selectedFaculties, setSelectedFaculties] = useState<{
     [key: string]: string;
   }>({});
+   
 
-  // State to manage slot dropdown selection
-  const [selectedSlot, setSelectedSlot] = useState<{
-    courseId: string;
-    slotType: "FN" | "AN";
-  } | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<
+    Record<string, { FN?: boolean; AN?: boolean }>
+  >({});
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/courses");
+      const data: Course[] = await response.json();
+      setCourses(data);
+      setFilteredCourses(data);
+    } catch (error) {
+      console.error("❌ Failed to fetch courses:", error);
+    }
+  };
 
   // Mock data for demonstration
   useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/courses");
-        const data: Course[] = await response.json();
-        setCourses(data);
-        setFilteredCourses(data);
-      } catch (error) {
-        console.error("❌ Failed to fetch courses:", error);
-      }
-    };
-
     fetchCourses();
   }, []);
 
@@ -72,33 +71,6 @@ export default function CourseAllocation() {
     setSelectedFaculties({ ...selectedFaculties, [courseId]: faculty });
   };
 
-  // Toggle slot dropdown
-  const toggleSlotDropdown = (courseId: string, slotType: "FN" | "AN") => {
-    if (
-      selectedSlot?.courseId === courseId &&
-      selectedSlot?.slotType === slotType
-    ) {
-      setSelectedSlot(null); // Close dropdown if clicked again
-    } else {
-      setSelectedSlot({ courseId, slotType });
-    }
-  };
-
-  // Handle slot selection (A, B, C)
-  const handleSlotSelection = (
-    courseId: string,
-    slot: string,
-    slotType: "FN" | "AN"
-  ) => {
-    setAllocatedSlots((prev) => ({
-      ...prev,
-      [courseId]: {
-        ...prev[courseId],
-        [slotType]: slot,
-      },
-    }));
-    setSelectedSlot(null); // Close dropdown after selection
-  };
 
   const uniqueStreams = Array.from(
     new Set(courses.map((course) => course.stream))
@@ -107,11 +79,6 @@ export default function CourseAllocation() {
     new Set(courses.map((course) => course.courseType))
   );
    
-  const [allocatedSlots, setAllocatedSlots] = useState<{
-    [key: string]: { FN?: string; AN?: string };
-  }>({});
-
-
   return (
     <div className="py-6">
       <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -179,13 +146,13 @@ export default function CourseAllocation() {
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900 min-w-[130px]"
                       >
                         Faculty
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-2 py-3.5 text-left text-sm font-semibold text-gray-900 max-w-[200px] truncate "
                       >
                         Course Title
                       </th>
@@ -197,7 +164,7 @@ export default function CourseAllocation() {
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Type
                       </th>
@@ -243,7 +210,7 @@ export default function CourseAllocation() {
                             ))}
                           </select>
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500  max-w-[200px] truncate">
                           {course.courseTitle}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -261,39 +228,23 @@ export default function CourseAllocation() {
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800 cursor-not-allowed"
                             }`}
-                            onClick={() =>
-                              course.forenoonSlots > 0 &&
-                              toggleSlotDropdown(course.id, "FN")
-                            }
+                            onClick={() => {
+                              if (course.forenoonSlots > 0) {
+                                setSelectedSlot((prev) => ({
+                                  ...prev,
+                                  [course.id]: {
+                                    ...prev[course.id],
+                                    FN: !prev[course.id]?.FN, // toggle FN only
+                                  },
+                                }));
+                              }
+                            }}
                             disabled={course.forenoonSlots === 0}
                           >
-                            {allocatedSlots[course.id]?.FN ||
-                              `${course.forenoonSlots} available`}
+                            {selectedSlot[course.id]?.FN
+                              ? "Selected"
+                              : `${course.forenoonSlots} available`}
                           </button>
-
-                          {selectedSlot?.courseId === course.id &&
-                            selectedSlot?.slotType === "FN" &&
-                            course.forenoonSlots > 0 && (
-                              <div className="absolute z-50 right-0 mt-2 w-32 bg-white border rounded-lg shadow-lg max-h-[150px] overflow-y-auto">
-                                <ul className="py-1 max-h-[100px] overflow-y-auto">
-                                  {["A", "B", "C"].map((item) => (
-                                    <li
-                                      key={item}
-                                      className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                      onClick={() =>
-                                        handleSlotSelection(
-                                          course.id,
-                                          item,
-                                          "FN"
-                                        )
-                                      }
-                                    >
-                                      {item}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
                         </td>
 
                         {/* AN Slots */}
@@ -304,44 +255,83 @@ export default function CourseAllocation() {
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800 cursor-not-allowed"
                             }`}
-                            onClick={() =>
-                              course.afternoonSlots > 0 &&
-                              toggleSlotDropdown(course.id, "AN")
-                            }
+                            onClick={() => {
+                              if (course.afternoonSlots > 0) {
+                                setSelectedSlot((prev) => ({
+                                  ...prev,
+                                  [course.id]: {
+                                    ...prev[course.id],
+                                    AN: !prev[course.id]?.AN, // toggle AN only
+                                  },
+                                }));
+                              }
+                            }}
                             disabled={course.afternoonSlots === 0}
                           >
-                            {allocatedSlots[course.id]?.AN ||
-                              `${course.afternoonSlots} available`}
+                            {selectedSlot[course.id]?.AN
+                              ? "Selected"
+                              : `${course.afternoonSlots} available`}
                           </button>
-
-                          {selectedSlot?.courseId === course.id &&
-                            selectedSlot?.slotType === "AN" &&
-                            course.afternoonSlots > 0 && (
-                              <div className="absolute z-50 right-0 mt-2 w-32 bg-white border rounded-lg shadow-lg max-h-[150px] overflow-y-auto">
-                                <ul className="py-1 max-h-[100px] overflow-y-auto">
-                                  {["A", "B", "C"].map((item) => (
-                                    <li
-                                      key={item}
-                                      className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                      onClick={() =>
-                                        handleSlotSelection(
-                                          course.id,
-                                          item,
-                                          "AN"
-                                        )
-                                      }
-                                    >
-                                      {item}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
                         </td>
 
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <button className="text-indigo-600 hover:text-indigo-900"
-                          onClick={()=>console.log(course.id)}
+                          <button
+                            className="text-indigo-600 hover:text-indigo-900"
+                            onClick={async () => {
+                              const selectSlot = selectedSlot[course.id];
+                              
+                              if (
+                                !selectSlot ||
+                                (!selectSlot.FN && !selectSlot.AN)
+                              ) {
+                                alert("Please select a slot first!");
+                                return;
+                              }
+
+                              try {
+                                // Collect all selected slots
+                                const selectedSlotTypes = [];
+                                if (selectSlot.FN) selectedSlotTypes.push("FN");
+                                if (selectSlot.AN) selectedSlotTypes.push("AN");
+                                
+                                  const response = await fetch(
+                                    "http://localhost:3001/api/allocate-slot",
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        courseId: course.id,
+                                        F_N: selectSlot.FN,
+                                        A_N: selectSlot.AN,
+                                      }),
+                                    }
+                                  );
+ 
+                                  const data = await response.json();
+                                  if (!response.ok) {
+                                    alert(
+                                      data.message ||
+                                        `Failed to allocate slot.`
+                                    );
+                                    return; // stop if any request fails
+                                  }
+                                
+
+                                alert("Slot(s) allocated successfully!");
+                                // Reset selection after allocation
+                                setSelectedSlot((prev) => ({
+                                  ...prev,
+                                  [course.id]: { FN: false, AN: false },
+                                }));
+
+                                await fetchCourses();
+                              } catch (error) {
+                                console.error("Error:", error);
+                                alert("Something went wrong!");
+                              }
+                            }}
                           >
                             Allocate
                           </button>

@@ -14,7 +14,7 @@ export interface Course {
   forenoonSlots: number;
   afternoonSlots: number;
   totalSlots: number;
-  basket?: string;
+  basket: string;
 }
 
 
