@@ -32,11 +32,18 @@ export default function Layout() {
                 </Link>
               </div>
               <Link
-                to="/AllocatedCourse"
+                to=""
                 className="inline-flex items-center px-7 pt-1 text-sm font-medium text-gray-900"
               >
                 <BookOpen className="mr-2 h-4 w-4" />
                 Allocated Courses
+              </Link>
+              <Link
+                to="/upload-csv"
+                className="inline-flex items-center px-7 pt-1 text-sm font-medium text-gray-900"
+              >
+                <BookOpen className="mr-2 h-4 w-4" />
+                Upload csv
               </Link>
             </div>
           </div>

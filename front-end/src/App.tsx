@@ -7,7 +7,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Dashboard from './pages/Dashboard';
 import CourseAllocation from './pages/CourseAllocation';
 import Layout from './components/Layout';
-// import ProtectedRoute from './components/ProtectedRoute';
+import UploadPage from "./pages/UploadCsv";
 
 function App() {
   return (
@@ -18,6 +18,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="course-allocation" element={<CourseAllocation />} />
+            <Route path="upload-csv" element={<UploadPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
