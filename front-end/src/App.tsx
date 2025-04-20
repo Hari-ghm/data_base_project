@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import CourseAllocation from './pages/CourseAllocation';
 import Layout from './components/Layout';
 import UploadPage from "./pages/UploadCsv";
+import AllocatedCourse from './pages/AllocatedCourse';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="course-allocation" element={<CourseAllocation />} />
             <Route path="upload-csv" element={<UploadPage />} />
+            <Route path="allocated-course" element={<AllocatedCourse />} />
           </Route>
         </Routes>
       </BrowserRouter>
