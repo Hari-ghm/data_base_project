@@ -81,7 +81,7 @@ export default function CourseAllocation() {
    
   return (
     <div className="py-6">
-      <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-semibold text-gray-900">
           Course Allocation
         </h1>
@@ -140,15 +140,21 @@ export default function CourseAllocation() {
                     <tr>
                       <th
                         scope="col"
-                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                      >
-                        Course Code
-                      </th>
-                      <th
-                        scope="col"
                         className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900 min-w-[130px]"
                       >
                         Faculty
+                      </th>
+                      <th
+                        scope="col"
+                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                      >
+                        Year
+                      </th>
+                      <th
+                        scope="col"
+                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                      >
+                        Course Code
                       </th>
                       <th
                         scope="col"
@@ -167,6 +173,12 @@ export default function CourseAllocation() {
                         className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Type
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        Credit
                       </th>
                       <th
                         scope="col"
@@ -191,9 +203,6 @@ export default function CourseAllocation() {
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredCourses.map((course) => (
                       <tr key={course.id}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {course.courseCode}
-                        </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           <select
                             value={selectedFaculties[course.id] || ""}
@@ -210,7 +219,16 @@ export default function CourseAllocation() {
                             ))}
                           </select>
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500  max-w-[200px] truncate">
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                          {course.year}
+                        </td>
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                          {course.courseCode}
+                        </td>
+                        <td
+                          className="whitespace-nowrap px-3 py-4 text-sm text-gray-500  max-w-[200px] truncate"
+                          title={course.courseTitle}
+                        >
                           {course.courseTitle}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -218,6 +236,9 @@ export default function CourseAllocation() {
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {course.courseType}
+                        </td>
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                          {course.credits}
                         </td>
 
                         {/* FN Slots */}
@@ -279,7 +300,13 @@ export default function CourseAllocation() {
                             className="text-indigo-600 hover:text-indigo-900"
                             onClick={async () => {
                               const selectSlot = selectedSlot[course.id];
+                              const selectedFacultyId =selectedFaculties[course.id];
                               
+                              if (!selectedFacultyId) {
+                                alert("Please select a faculty first!");
+                                return;
+                              }
+
                               if (
                                 !selectSlot ||
                                 (!selectSlot.FN && !selectSlot.AN)
@@ -288,36 +315,35 @@ export default function CourseAllocation() {
                                 return;
                               }
 
+
                               try {
                                 // Collect all selected slots
                                 const selectedSlotTypes = [];
                                 if (selectSlot.FN) selectedSlotTypes.push("FN");
                                 if (selectSlot.AN) selectedSlotTypes.push("AN");
-                                
-                                  const response = await fetch(
-                                    "http://localhost:3001/api/allocate-slot",
-                                    {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        courseId: course.id,
-                                        F_N: selectSlot.FN,
-                                        A_N: selectSlot.AN,
-                                      }),
-                                    }
-                                  );
- 
-                                  const data = await response.json();
-                                  if (!response.ok) {
-                                    alert(
-                                      data.message ||
-                                        `Failed to allocate slot.`
-                                    );
-                                    return; // stop if any request fails
+
+                                const response = await fetch(
+                                  "http://localhost:3001/api/allocate-slot",
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      courseId: course.id,
+                                      F_N: selectSlot.FN,
+                                      A_N: selectSlot.AN,
+                                    }),
                                   }
-                                
+                                );
+
+                                const data = await response.json();
+                                if (!response.ok) {
+                                  alert(
+                                    data.message || `Failed to allocate slot.`
+                                  );
+                                  return; // stop if any request fails
+                                }
 
                                 alert("Slot(s) allocated successfully!");
                                 // Reset selection after allocation
