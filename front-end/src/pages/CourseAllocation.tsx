@@ -301,7 +301,7 @@ export default function CourseAllocation() {
                             onClick={async () => {
                               const selectSlot = selectedSlot[course.id];
                               const selectedFacultyId =selectedFaculties[course.id];
-                              
+                              console.log(selectedFacultyId)
                               if (!selectedFacultyId) {
                                 alert("Please select a faculty first!");
                                 return;
@@ -321,7 +321,7 @@ export default function CourseAllocation() {
                                 const selectedSlotTypes = [];
                                 if (selectSlot.FN) selectedSlotTypes.push("FN");
                                 if (selectSlot.AN) selectedSlotTypes.push("AN");
-
+ 
                                 const response = await fetch(
                                   "http://localhost:3001/api/allocate-slot",
                                   {
@@ -333,6 +333,8 @@ export default function CourseAllocation() {
                                       courseId: course.id,
                                       F_N: selectSlot.FN,
                                       A_N: selectSlot.AN,
+                                      faculty:selectedFacultyId,
+                                      Course:course
                                     }),
                                   }
                                 );

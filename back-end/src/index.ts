@@ -31,7 +31,7 @@ app.get("/courses", async (req, res) => {
 
 // POST request handler for /api/allocate-slot
 app.post("/api/allocate-slot", async (req: Request, res: Response) => {
-  const { courseId, F_N, A_N } = req.body;
+  const { courseId, F_N, A_N,Course:course,faculty } = req.body;
 
   try {
     if (F_N && A_N) {
@@ -39,15 +39,53 @@ app.post("/api/allocate-slot", async (req: Request, res: Response) => {
         'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" - 1, "afternoonSlots" = "afternoonSlots" - 1 WHERE id = $1 AND "forenoonSlots" > 0 AND "afternoonSlots" > 0',
         [courseId]
       );
+
+      await pool.query(
+        `INSERT INTO allocated_courses (
+          year, stream, "courseType", "courseCode", "courseTitle",
+          "lectureHours","tutorialHours","practicalHours",credits,
+          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        [
+          course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
+          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,A_N,faculty,course.basket
+        ]
+      );
+
+
     } else if (F_N) {
       await pool.query(
         'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" - 1 WHERE id = $1 AND "forenoonSlots" > 0',
         [courseId]
       );
+
+      await pool.query(
+        `INSERT INTO allocated_courses (
+          year, stream, "courseType", "courseCode", "courseTitle",
+          "lectureHours","tutorialHours","practicalHours",credits,
+          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        [
+          course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
+          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,false,faculty,course.basket
+        ]
+      );
     } else if (A_N) {
       await pool.query(
         'UPDATE course_table SET "afternoonSlots" = "afternoonSlots" - 1 WHERE id = $1 AND "afternoonSlots" > 0',
         [courseId]
+      );
+
+      await pool.query(
+        `INSERT INTO allocated_courses (
+          year, stream, "courseType", "courseCode", "courseTitle",
+          "lectureHours","tutorialHours","practicalHours",credits,
+          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+        [
+          course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
+          course.practicalHours,course.credits,course.prerequisites,course.school,false,A_N,faculty,course.basket
+        ]
       );
     }
 
@@ -89,7 +127,6 @@ app.post("/api/process-csv", async (req: Request, res: Response) => {
     };
 
     for (const row of rows) {
-      console.log(row);
 
       const values = [
         toNull(row["id"]), // Include ID
