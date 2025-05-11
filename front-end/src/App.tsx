@@ -1,14 +1,11 @@
-// import React from 'react';
 import { BrowserRouter, Routes, Route} from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-//import Login from './pages/Login';
-// import Register from './pages/Register';
-// import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import CourseAllocation from './pages/CourseAllocation';
 import Layout from './components/Layout';
 import UploadPage from "./pages/UploadCsv";
-import AllocatedCourse from './pages/AllocatedCourse';
+import AllocatedCourses from './pages/AllocatedCourses';
+import FacultyTimetable from './pages/FacultyTimetable';
 
 function App() {
   return (
@@ -20,7 +17,8 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="course-allocation" element={<CourseAllocation />} />
             <Route path="upload-csv" element={<UploadPage />} />
-            <Route path="allocated-course" element={<AllocatedCourse />} />
+            <Route path="allocated-course" element={<AllocatedCourses />} />
+            <Route path="faculty-timetable/:facultyId" element={<FacultyTimetable />} />
           </Route>
         </Routes>
       </BrowserRouter>

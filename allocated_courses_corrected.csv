@@ -1,0 +1,6 @@
+id,year,stream,courseType,courseCode,courseTitle,lectureHours,tutorialHours,practicalHours,credits,prerequisites,school,forenoonSlots,afternoonSlots,faculty,basket
+1,2022,CSE,Core,CSE101,Introduction to Programming,3,1,2,4,,School of Computing,True,False,Dr. A. Kumar,Programming
+2,2021,ECE,Core,ECE102,Digital Logic Design,3,1,2,4,,School of Electronics,False,True,Prof. B. Sharma,Digital Systems
+3,2024,CSE,Elective,CSE203,Data Structures,3,0,2,4,CSE101,School of Computing,True,True,Dr. C. Verma,DSA
+4,2023,ME,Core,ME201,Thermodynamics,3,1,0,4,,School of Mechanical Engineering,True,False,Dr. D. Reddy,Thermal
+5,2024,CSE,Elective,CSE310,Machine Learning,3,1,2,5,CSE203,School of Computing,False,True,Dr. E. Nair,AI/ML

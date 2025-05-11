@@ -25,3 +25,37 @@ export interface CourseAllocation {
   slotType: 'FN' | 'AN';
   timestamp: string;
 }
+
+export interface CourseData {
+  id: string;
+  year: string;
+  stream: string;
+  courseType: string;
+  courseCode: string;
+  courseTitle: string;
+  lectureHours: string;
+  tutorialHours: string;
+  practicalHours: string;
+  credits: string;
+  prerequisites: string;
+  school: string;
+  forenoonSlots: string;
+  afternoonSlots: string;
+  faculty: string;
+  basket: string;
+}
+
+export interface Faculty {
+  id: string;
+  name: string;
+  department: string;
+  imageUrl: string;
+}
+
+export interface User {
+  id: string;
+  employeeId: string;
+  name: string;
+  email: string;
+  school: string;
+}
