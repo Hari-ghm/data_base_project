@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard';
 import CourseAllocation from './pages/CourseAllocation';
 import Layout from './components/Layout';
 import UploadPage from "./pages/UploadCsv";
-import AllocatedCourses from './pages/AllocatedCourses';
+import AllocatedCourses from './pages/AllocatedCourse_dashboard';
 import FacultyTimetable from './pages/FacultyTimetable';
 
 function App() {
