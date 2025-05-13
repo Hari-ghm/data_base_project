@@ -17,39 +17,34 @@ export interface Course {
   basket: string;
 }
 
-
-export interface CourseAllocation {
+export interface AllocatedCourses {
   id: string;
-  courseId: string;
-  userId: string;
-  slotType: 'FN' | 'AN';
-  timestamp: string;
-}
-
-export interface CourseData {
-  id: string;
-  year: string;
+  year: number;
   stream: string;
   courseType: string;
   courseCode: string;
   courseTitle: string;
-  lectureHours: string;
-  tutorialHours: string;
-  practicalHours: string;
-  credits: string;
+  lectureHours: number;
+  tutorialHours: number;
+  practicalHours: number;
+  credits: number;
   prerequisites: string;
   school: string;
-  forenoonSlots: string;
-  afternoonSlots: string;
-  faculty: string;
+  forenoonSlots: number;
+  afternoonSlots: number;
+  faculty:string;
   basket: string;
+  empid:number;
 }
+
 
 export interface Faculty {
   id: string;
   name: string;
-  department: string;
-  imageUrl: string;
+  empid: number;
+  photo_url: string;
+  email:string;
+  school:string;
 }
 
 export interface User {

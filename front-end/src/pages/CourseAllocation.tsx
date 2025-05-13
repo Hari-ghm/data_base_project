@@ -1,24 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Course } from "../types";
+import { Faculty } from "../types";
 
 export default function CourseAllocation() {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
+  const [faculty, setFaculty] = useState<Faculty[]>([]);
   const [filters, setFilters] = useState({
     stream: "",
     courseType: "",
     school: user?.school || "",
   });
 
-  // Mock data for faculties
-  const faculties = ["Dr. Smith", "Prof. Johnson", "Dr. Williams", "Ms. Brown"];
-
   // State to hold selected faculty for each course
   const [selectedFaculties, setSelectedFaculties] = useState<{
-    [key: string]: string;
+    [key: string]: { name: string; empId: string };
   }>({});
+  
+
+
+  // Mock data for faculties
+  const fetchFaculties = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/faculties");
+      const data: Faculty[] = await response.json();
+      setFaculty(data);
+    } catch (error) {
+      console.error("❌ Failed to fetch courses:", error);
+    }
+  };
    
 
   const [selectedSlot, setSelectedSlot] = useState<
@@ -39,6 +51,7 @@ export default function CourseAllocation() {
   // Mock data for demonstration
   useEffect(() => {
     fetchCourses();
+    fetchFaculties();
   }, []);
 
 
@@ -67,8 +80,12 @@ export default function CourseAllocation() {
   };
 
   // Handle faculty selection for each course
-  const handleFacultyChange = (courseId: string, faculty: string) => {
-    setSelectedFaculties({ ...selectedFaculties, [courseId]: faculty });
+  
+  const handleFacultyChange = (courseId: string, facultyName: string) => {
+    const selected = faculty.find(f => f.name === facultyName);
+    if (selected) {
+      setSelectedFaculties({...selectedFaculties,[courseId]: {name: selected.name,empId: selected.empid.toString()}});
+    }
   };
 
 
@@ -205,16 +222,16 @@ export default function CourseAllocation() {
                       <tr key={course.id}>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           <select
-                            value={selectedFaculties[course.id] || ""}
+                            value={selectedFaculties[course.id]?.name || ""}
                             onChange={(e) =>
                               handleFacultyChange(course.id, e.target.value)
                             }
                             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                           >
                             <option value="">Select Faculty</option>
-                            {faculties.map((faculty) => (
-                              <option key={faculty} value={faculty}>
-                                {faculty}
+                            {faculty.map((f) => (
+                              <option key={f.id} value={f.name}>
+                                {f.name}
                               </option>
                             ))}
                           </select>
@@ -300,8 +317,9 @@ export default function CourseAllocation() {
                             className="text-indigo-600 hover:text-indigo-900"
                             onClick={async () => {
                               const selectSlot = selectedSlot[course.id];
-                              const selectedFacultyId =selectedFaculties[course.id];
-                              console.log(selectedFacultyId)
+                              const selectedFacultyId =
+                                selectedFaculties[course.id];
+
                               if (!selectedFacultyId) {
                                 alert("Please select a faculty first!");
                                 return;
@@ -315,13 +333,12 @@ export default function CourseAllocation() {
                                 return;
                               }
 
-
                               try {
                                 // Collect all selected slots
                                 const selectedSlotTypes = [];
                                 if (selectSlot.FN) selectedSlotTypes.push("FN");
                                 if (selectSlot.AN) selectedSlotTypes.push("AN");
- 
+
                                 const response = await fetch(
                                   "http://localhost:3001/api/allocate-slot",
                                   {
@@ -333,8 +350,9 @@ export default function CourseAllocation() {
                                       courseId: course.id,
                                       F_N: selectSlot.FN,
                                       A_N: selectSlot.AN,
-                                      faculty:selectedFacultyId,
-                                      Course:course
+                                      Faculty: selectedFacultyId.name,
+                                      Facultyempid:selectedFacultyId.empId,
+                                      Course: course,
                                     }),
                                   }
                                 );

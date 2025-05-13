@@ -18,7 +18,7 @@ function App() {
             <Route path="course-allocation" element={<CourseAllocation />} />
             <Route path="upload-csv" element={<UploadPage />} />
             <Route path="allocated-course" element={<AllocatedCourses />} />
-            <Route path="faculty-timetable/:facultyId" element={<FacultyTimetable />} />
+            <Route path="faculty-timetable/:facultyempId" element={<FacultyTimetable />} />
           </Route>
         </Routes>
       </BrowserRouter>

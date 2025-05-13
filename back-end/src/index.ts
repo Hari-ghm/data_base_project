@@ -29,10 +29,47 @@ app.get("/courses", async (req, res) => {
   }
 });
 
+//get request for faculty
+app.get("/faculties", async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM "faculty_table" '
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("🔥 Error fetching faculty:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+//get request for faculty timetable
+app.get("/allocated-courses", async (req, res) => {
+  const employeeid = parseInt(req.query.empid as string, 10);
+  
+  try {
+    let result = await pool.query(
+        'SELECT * FROM "allocated_courses" WHERE "empid" = $1',
+        [employeeid]
+    )
+    
+    if (result.rows.length === 0) {
+      res.status(200).json({ message: "No courses have been allotted" });
+    } else {
+      res.status(200).json(result.rows);
+    }
+
+  } catch (error) {
+    console.error("🔥 Error fetching faculty time table:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
 // POST request handler for /api/allocate-slot
 app.post("/api/allocate-slot", async (req: Request, res: Response) => {
-  const { courseId, F_N, A_N,Course:course,faculty } = req.body;
-
+  const { courseId, F_N, A_N,Course:course,Faculty:faculty,Facultyempid} = req.body;
+  const employeeid = parseInt(Facultyempid, 10);
+  
   try {
     if (F_N && A_N) {
       await pool.query(
@@ -44,11 +81,11 @@ app.post("/api/allocate-slot", async (req: Request, res: Response) => {
         `INSERT INTO allocated_courses (
           year, stream, "courseType", "courseCode", "courseTitle",
           "lectureHours","tutorialHours","practicalHours",credits,
-          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket,empid
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
         [
           course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
-          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,A_N,faculty,course.basket
+          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,A_N,faculty,course.basket,employeeid
         ]
       );
 
@@ -63,11 +100,11 @@ app.post("/api/allocate-slot", async (req: Request, res: Response) => {
         `INSERT INTO allocated_courses (
           year, stream, "courseType", "courseCode", "courseTitle",
           "lectureHours","tutorialHours","practicalHours",credits,
-          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket,empid
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
         [
           course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
-          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,false,faculty,course.basket
+          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,false,faculty,course.basket,employeeid
         ]
       );
     } else if (A_N) {
@@ -80,11 +117,11 @@ app.post("/api/allocate-slot", async (req: Request, res: Response) => {
         `INSERT INTO allocated_courses (
           year, stream, "courseType", "courseCode", "courseTitle",
           "lectureHours","tutorialHours","practicalHours",credits,
-          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket,empid
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
         [
           course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
-          course.practicalHours,course.credits,course.prerequisites,course.school,false,A_N,faculty,course.basket
+          course.practicalHours,course.credits,course.prerequisites,course.school,false,A_N,faculty,course.basket,employeeid
         ]
       );
     }
@@ -96,6 +133,35 @@ app.post("/api/allocate-slot", async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+app.get("/faculty", async (req, res) => {
+  const empid = parseInt(req.query.empid as string, 10);
+  
+  if (isNaN(empid)) {
+     res.status(400).json({ message: "Invalid employee ID" });
+     return;
+  }
+
+  try {
+    
+    const result = await pool.query(
+      'SELECT * FROM "faculty_table" WHERE "empid" = $1',
+      [empid]
+    );
+
+    if (result.rows.length === 0) {
+       res.status(404).json({ message: "Faculty not found" });
+       return;
+    }
+
+     res.status(200).json(result.rows[0]); // return single faculty
+     
+  } catch (error) {
+    console.error("🔥 Error fetching faculty:", error);
+     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 
 // Route to handle CSV data submission
 // Add explicit types 'Request' and 'Response' to req and res parameters
@@ -189,9 +255,65 @@ app.post("/api/process-csv", async (req: Request, res: Response) => {
   } finally {
     client.release();
   }
-
-  
 });
+
+// post request to delete course details from faculty table
+app.post("/delete-course", async (req, res) => {
+  const { empid, courseCode, afternoonSlots, forenoonSlots } = req.body;
+
+  if (!empid || !courseCode) {
+    res
+      .status(400)
+      .json({ message: "Employee ID and Course Code are required" });
+    return;
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // 1. Delete from allocated_courses
+    await client.query(
+      'DELETE FROM "allocated_courses" WHERE "empid" = $1 AND "courseCode" = $2',
+      [empid, courseCode]
+    );
+
+    // 2. Conditionally build the update query
+    let updateQuery = 'UPDATE "course_table" SET';
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (forenoonSlots) {
+      updates.push(` "forenoonSlots" = "forenoonSlots" + 1`);
+    }
+
+    if (afternoonSlots) {
+      updates.push(` "afternoonSlots" = "afternoonSlots" + 1`);
+    }
+
+    if (updates.length > 0) {
+      updateQuery += updates.join(",") + ` WHERE "courseCode" = $${idx}`;
+      values.push(courseCode);
+
+      await client.query(updateQuery, values);
+    }
+
+    await client.query("COMMIT");
+
+    res.status(200).json({ message: "Course deleted and slots updated" });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("🔥 Error during course deletion/update:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  } finally {
+    client.release();
+  }
+});
+
+
+
 
 // Start server
 app.listen(port, () => {
