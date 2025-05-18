@@ -42,6 +42,19 @@ app.get("/faculties", async (req, res) => {
   }
 });
 
+//get request for full allocated table
+app.get("/full-table", async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM "allocated_courses" '
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("🔥 Error fetching faculty:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 //get request for faculty timetable
 app.get("/allocated-courses", async (req, res) => {
   const employeeid = parseInt(req.query.empid as string, 10);

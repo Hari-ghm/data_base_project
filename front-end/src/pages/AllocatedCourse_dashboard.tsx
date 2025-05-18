@@ -41,7 +41,7 @@ export default function AllocatedCourses() {
       </h1>
 
       {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+      <div className="flex flex-col md:flex-row items-center mb-8 gap-4">
         <select
           aria-label="Filter by Department" // Added aria-label for accessibility
           className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -53,7 +53,13 @@ export default function AllocatedCourses() {
           <option value="all">All Departments</option>
         </select>
 
-        <div className="relative w-full md:w-64">
+        <Link to="/full-table">
+          <button className=" px-4 py-2 bg-green-600 text-white rounded hover:bg-indigo-700">
+            View Full Table
+          </button>
+        </Link>
+
+        <div className="relative w-full md:w-64 text-right ml-auto">
           <input
             type="text"
             placeholder="Search faculty..."
@@ -85,7 +91,7 @@ export default function AllocatedCourses() {
           <div className="spinner"></div>
           <p className="mt-4 text-gray-600">Loading faculty data...</p>
         </div>
-        ) : (
+      ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredFaculties.length > 0 ? (
             filteredFaculties.map((faculty) => (

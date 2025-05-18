@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import UploadPage from "./pages/UploadCsv";
 import AllocatedCourses from './pages/AllocatedCourse_dashboard';
 import FacultyTimetable from './pages/FacultyTimetable';
+import FullTable from './pages/FullTable';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="upload-csv" element={<UploadPage />} />
             <Route path="allocated-course" element={<AllocatedCourses />} />
             <Route path="faculty-timetable/:facultyempId" element={<FacultyTimetable />} />
+            <Route path="/full-table" element={<FullTable />} />
           </Route>
         </Routes>
       </BrowserRouter>

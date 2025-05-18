@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import "./AllocatedCourse.css";
 import { AllocatedCourses, Faculty } from "../types";
 import { ArrowLeft } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function FacultyTimetable() {
   const { facultyempId } = useParams<{ facultyempId: string }>();
@@ -95,6 +97,72 @@ export default function FacultyTimetable() {
     }
   };
   
+  //downloading csv
+      const downloadCSV = () => {
+        if (!courses.length) return;
+  
+        // Exclude 'id' from headers
+        const keys = Object.keys(courses[0]).filter((key) => key !== "id");
+        const header = keys.join(",") + "\n";
+  
+        const rows = courses
+          .map((course) =>
+            keys
+              .map((key) => {
+                const value = course[key as keyof AllocatedCourses];
+                return typeof value === "string" && value.includes(",")
+                  ? `"${value}"`
+                  : value;
+              })
+              .join(",")
+          )
+          .join("\n");
+  
+        const csvContent = header + rows;
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+  
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "allocated_courses.csv");
+        link.click();
+      };
+      
+      // downloading pdf
+      const downloadPDF = () => {
+        if (!courses.length) return;
+  
+        const doc = new jsPDF();
+  
+        // Get all keys except 'id'
+        const keys = Object.keys(courses[0]).filter((key) => key !== "id");
+  
+        // Add "S.No" as first column header
+        const headers = [["S.No", ...keys.map((key) => key.toUpperCase())]];
+  
+        // Map data rows with serial numbers starting from 1
+        const data = courses.map((course, index) => {
+          const row = keys.map((key) => {
+            const value = course[key as keyof typeof course];
+            return typeof value === "boolean"
+              ? value
+                ? "Yes"
+                : "No"
+              : String(value);
+          });
+          return [index + 1, ...row]; // Add S.No at the beginning
+        });
+  
+        autoTable(doc, {
+          head: headers,
+          body: data,
+          startY: 20,
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [22, 160, 133] }, // Teal header
+        });
+  
+        doc.save("allocated_courses.pdf");
+      };
 
   if (loading) {
     return (
@@ -151,6 +219,23 @@ export default function FacultyTimetable() {
               </span>
             </div>
           </div>
+
+          {courses.length > 0 && (
+            <div className="flex flex-col items-end">
+              <button
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg mb-7 shadow"
+                onClick={downloadCSV}
+              >
+                Download CSV
+              </button>
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
+                onClick={downloadPDF}
+              >
+                Download PDF
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -196,7 +281,13 @@ export default function FacultyTimetable() {
                     <td>{course.afternoonSlots ? "Yes" : "No"}</td>
                     <td>
                       <button
-                        onClick={() => handleDelete(course.courseCode,!!course.afternoonSlots,!!course.forenoonSlots)}
+                        onClick={() =>
+                          handleDelete(
+                            course.courseCode,
+                            !!course.afternoonSlots,
+                            !!course.forenoonSlots
+                          )
+                        }
                         className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700"
                       >
                         Delete
