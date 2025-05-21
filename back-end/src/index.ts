@@ -326,6 +326,25 @@ app.post("/delete-course", async (req, res) => {
 });
 
 
+app.get("/each-course-allocation", async (req, res) => {
+  const { code, stream } = req.query;
+
+  if (!code || !stream) {
+    res.status(400).json({ error: "Missing course code or stream" });
+    return
+  }
+
+  try {
+    const data = await pool.query(
+      `SELECT "faculty", "forenoonSlots", "afternoonSlots" FROM allocated_courses WHERE "courseCode" = $1 AND stream = $2`,
+      [code, stream]
+    );
+    res.json(data.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch faculty info" });
+  }
+});
 
 
 // Start server

@@ -19,9 +19,7 @@ export default function CourseAllocation() {
     [key: string]: { name: string; empId: string };
   }>({});
   
-
-
-  // Mock data for faculties
+ // Mock data for faculties
   const fetchFaculties = async () => {
     try {
       const response = await fetch("http://localhost:3001/faculties");
@@ -80,14 +78,34 @@ export default function CourseAllocation() {
   };
 
   // Handle faculty selection for each course
-  
   const handleFacultyChange = (courseId: string, facultyName: string) => {
     const selected = faculty.find(f => f.name === facultyName);
     if (selected) {
       setSelectedFaculties({...selectedFaculties,[courseId]: {name: selected.name,empId: selected.empid.toString()}});
     }
   };
+  
+  // getting course wise faculty,fn,an details
+  const [coursewiseDetails, setcoursewiseDetails] = useState<{
+    [key: string]: { name: string; fn: boolean; an: boolean }[];
+  }>({});
 
+  const fetchcoursewiseDetails = async (courseCode: string, courseStream: string,) => {
+    
+    try {
+      const res = await fetch(`http://localhost:3001/each-course-allocation?code=${courseCode}&stream=${courseStream}`);
+      const data = await res.json();
+      const uniqueKey = `${courseCode}_${courseStream}`;
+      const transformed = data.map((item: { faculty: string; forenoonSlots: boolean; afternoonSlots: boolean; }) => ({
+        name: item.faculty,
+        fn: item.forenoonSlots,
+        an: item.afternoonSlots,
+      }));
+      setcoursewiseDetails((prev) => ({ ...prev, [uniqueKey]: transformed }));
+    } catch (error) {
+      console.error("Error fetching faculty info:", error);
+    }
+  };  
 
   const uniqueStreams = Array.from(
     new Set(courses.map((course) => course.stream))
@@ -187,6 +205,12 @@ export default function CourseAllocation() {
                       </th>
                       <th
                         scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        School
+                      </th>
+                      <th
+                        scope="col"
                         className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
                         Type
@@ -215,10 +239,18 @@ export default function CourseAllocation() {
                       >
                         Actions
                       </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        Already Allocated
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {filteredCourses.map((course) => (
+                    {filteredCourses.map((course) => {
+                      const uniqueKey = `${course.courseCode}_${course.stream}`;
+                      return(
                       <tr key={course.id}>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           <select
@@ -250,6 +282,9 @@ export default function CourseAllocation() {
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {course.stream}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                          {course.school}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {course.courseType}
@@ -351,7 +386,7 @@ export default function CourseAllocation() {
                                       F_N: selectSlot.FN,
                                       A_N: selectSlot.AN,
                                       Faculty: selectedFacultyId.name,
-                                      Facultyempid:selectedFacultyId.empId,
+                                      Facultyempid: selectedFacultyId.empId,
                                       Course: course,
                                     }),
                                   }
@@ -382,8 +417,49 @@ export default function CourseAllocation() {
                             Allocate
                           </button>
                         </td>
+                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                          <div
+                            className="relative group inline-block"
+                            onMouseEnter={() =>
+                              fetchcoursewiseDetails(
+                                course.courseCode,
+                                course.stream
+                              )
+                            }
+                          >
+                            <button className="rounded-full bg-gray-400 text-white w-5 h-5 ml-2 flex items-center justify-center text-xs cursor-pointer">
+                              i
+                            </button>
+
+                            {/* Tooltip Box - positioned to the left */}
+                            <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden group-hover:block bg-white border border-gray-300 shadow-lg p-2 rounded-lg text-sm pointer-events-none w-56">
+                              <table className="table-auto text-left text-xs w-full">
+                                <thead>
+                                  <tr className="font-semibold border-b">
+                                    <th className="pr-2 py-1">Faculty</th>
+                                    <th className="pr-2 py-1">FN</th>
+                                    <th className="py-1">AN</th>
+                                  </tr>
+                                </thead>
+
+                                <tbody>
+                                  {coursewiseDetails[uniqueKey]?.map((f, idx) => {
+                                    return (
+                                      <tr key={idx}>
+                                        <td className="pr-2 py-1">{f.name || "No name"}</td>
+                                        <td className="pr-2 py-1">{f.fn ? "yes" : "no"}</td>
+                                        <td className="py-1">{f.an ? "yes" : "no"}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+
+                              </table>
+                            </div>
+                          </div>
+                        </td>
                       </tr>
-                    ))}
+                    );})}
                     {filteredCourses.length === 0 && (
                       <tr>
                         <td
