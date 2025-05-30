@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import Select from "react-select";
 import { useAuth } from "../contexts/AuthContext";
 import { Course } from "../types";
 import { Faculty } from "../types";
@@ -8,6 +10,7 @@ export default function CourseAllocation() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [faculty, setFaculty] = useState<Faculty[]>([]);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [filters, setFilters] = useState({
     stream: "",
     courseType: "",
@@ -113,6 +116,22 @@ export default function CourseAllocation() {
   const uniqueCourseTypes = Array.from(
     new Set(courses.map((course) => course.courseType))
   );
+
+  const handleTitleSort = () => {
+    const newOrder = sortOrder === "asc" ? "desc" : "asc";
+    setSortOrder(newOrder);
+
+    const sorted = [...filteredCourses].sort((a, b) => {
+      const titleA = a.courseTitle.toLowerCase();
+      const titleB = b.courseTitle.toLowerCase();
+
+      if (newOrder === "asc") return titleA.localeCompare(titleB);
+      else return titleB.localeCompare(titleA);
+    });
+
+    setFilteredCourses(sorted);
+  };
+  
    
   return (
     <div className="py-6">
@@ -193,10 +212,19 @@ export default function CourseAllocation() {
                       </th>
                       <th
                         scope="col"
-                        className="px-2 py-3.5 text-left text-sm font-semibold text-gray-900 max-w-[200px] truncate "
+                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 cursor-pointer select-none"
+                        onClick={handleTitleSort}
                       >
-                        Course Title
+                        <div className="flex items-center gap-1">
+                          Course Title
+                          <span className="text-gray-400 group-hover:text-black transition">
+                            {sortOrder === "asc" && <ChevronUp size={16} />}
+                            {sortOrder === "desc" && <ChevronDown size={16} />}
+                            {sortOrder === null && <ChevronsUpDown size={16} />}
+                          </span>
+                        </div>
                       </th>
+
                       <th
                         scope="col"
                         className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
@@ -250,216 +278,239 @@ export default function CourseAllocation() {
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredCourses.map((course) => {
                       const uniqueKey = `${course.courseCode}_${course.stream}`;
-                      return(
-                      <tr key={course.id}>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <select
-                            value={selectedFaculties[course.id]?.name || ""}
-                            onChange={(e) =>
-                              handleFacultyChange(course.id, e.target.value)
-                            }
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      return (
+                        <tr key={course.id}>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <div className="min-w-[180px]">
+                              <Select
+                                options={faculty.map((f) => ({
+                                  value: f.name,
+                                  label: `${f.empid}_${f.name}`,
+                                }))}
+                                value={
+                                  selectedFaculties[course.id]
+                                    ? {
+                                        value:
+                                          selectedFaculties[course.id].name,
+                                        label: `${
+                                          selectedFaculties[course.id].empId
+                                        }_${selectedFaculties[course.id].name}`,
+                                      }
+                                    : null
+                                }
+                                onChange={(selectedOption) =>
+                                  handleFacultyChange(
+                                    course.id,
+                                    selectedOption?.value || ""
+                                  )
+                                }
+                                placeholder="Select Faculty"
+                                className="text-sm"
+                              />
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                            {course.year}
+                          </td>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                            {course.courseCode}
+                          </td>
+                          <td
+                            className="whitespace-nowrap px-3 py-4 text-sm text-gray-500  max-w-[200px] truncate"
+                            title={course.courseTitle}
                           >
-                            <option value="">Select Faculty</option>
-                            {faculty.map((f) => (
-                              <option key={f.id} value={f.name}>
-                                {f.name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                          {course.year}
-                        </td>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                          {course.courseCode}
-                        </td>
-                        <td
-                          className="whitespace-nowrap px-3 py-4 text-sm text-gray-500  max-w-[200px] truncate"
-                          title={course.courseTitle}
-                        >
-                          {course.courseTitle}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {course.stream}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {course.school}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {course.courseType}
-                        </td>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                          {course.credits}
-                        </td>
+                            {course.courseTitle}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {course.stream}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {course.school}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            {course.courseType}
+                          </td>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                            {course.credits}
+                          </td>
 
-                        {/* FN Slots */}
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 relative">
-                          <button
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              course.forenoonSlots > 0
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800 cursor-not-allowed"
-                            }`}
-                            onClick={() => {
-                              if (course.forenoonSlots > 0) {
-                                setSelectedSlot((prev) => ({
-                                  ...prev,
-                                  [course.id]: {
-                                    ...prev[course.id],
-                                    FN: !prev[course.id]?.FN, // toggle FN only
-                                  },
-                                }));
-                              }
-                            }}
-                            disabled={course.forenoonSlots === 0}
-                          >
-                            {selectedSlot[course.id]?.FN
-                              ? "Selected"
-                              : `${course.forenoonSlots} available`}
-                          </button>
-                        </td>
-
-                        {/* AN Slots */}
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 relative">
-                          <button
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              course.afternoonSlots > 0
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800 cursor-not-allowed"
-                            }`}
-                            onClick={() => {
-                              if (course.afternoonSlots > 0) {
-                                setSelectedSlot((prev) => ({
-                                  ...prev,
-                                  [course.id]: {
-                                    ...prev[course.id],
-                                    AN: !prev[course.id]?.AN, // toggle AN only
-                                  },
-                                }));
-                              }
-                            }}
-                            disabled={course.afternoonSlots === 0}
-                          >
-                            {selectedSlot[course.id]?.AN
-                              ? "Selected"
-                              : `${course.afternoonSlots} available`}
-                          </button>
-                        </td>
-
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <button
-                            className="text-indigo-600 hover:text-indigo-900"
-                            onClick={async () => {
-                              const selectSlot = selectedSlot[course.id];
-                              const selectedFacultyId =
-                                selectedFaculties[course.id];
-
-                              if (!selectedFacultyId) {
-                                alert("Please select a faculty first!");
-                                return;
-                              }
-
-                              if (
-                                !selectSlot ||
-                                (!selectSlot.FN && !selectSlot.AN)
-                              ) {
-                                alert("Please select a slot first!");
-                                return;
-                              }
-
-                              try {
-                                // Collect all selected slots
-                                const selectedSlotTypes = [];
-                                if (selectSlot.FN) selectedSlotTypes.push("FN");
-                                if (selectSlot.AN) selectedSlotTypes.push("AN");
-
-                                const response = await fetch(
-                                  "http://localhost:3001/api/allocate-slot",
-                                  {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
+                          {/* FN Slots */}
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 relative">
+                            <button
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                course.forenoonSlots > 0
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800 cursor-not-allowed"
+                              }`}
+                              onClick={() => {
+                                if (course.forenoonSlots > 0) {
+                                  setSelectedSlot((prev) => ({
+                                    ...prev,
+                                    [course.id]: {
+                                      ...prev[course.id],
+                                      FN: !prev[course.id]?.FN, // toggle FN only
                                     },
-                                    body: JSON.stringify({
-                                      courseId: course.id,
-                                      F_N: selectSlot.FN,
-                                      A_N: selectSlot.AN,
-                                      Faculty: selectedFacultyId.name,
-                                      Facultyempid: selectedFacultyId.empId,
-                                      Course: course,
-                                    }),
-                                  }
-                                );
+                                  }));
+                                }
+                              }}
+                              disabled={course.forenoonSlots === 0}
+                            >
+                              {selectedSlot[course.id]?.FN
+                                ? "Selected"
+                                : `${course.forenoonSlots} available`}
+                            </button>
+                          </td>
 
-                                const data = await response.json();
-                                if (!response.ok) {
-                                  alert(
-                                    data.message || `Failed to allocate slot.`
-                                  );
-                                  return; // stop if any request fails
+                          {/* AN Slots */}
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 relative">
+                            <button
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                course.afternoonSlots > 0
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800 cursor-not-allowed"
+                              }`}
+                              onClick={() => {
+                                if (course.afternoonSlots > 0) {
+                                  setSelectedSlot((prev) => ({
+                                    ...prev,
+                                    [course.id]: {
+                                      ...prev[course.id],
+                                      AN: !prev[course.id]?.AN, // toggle AN only
+                                    },
+                                  }));
+                                }
+                              }}
+                              disabled={course.afternoonSlots === 0}
+                            >
+                              {selectedSlot[course.id]?.AN
+                                ? "Selected"
+                                : `${course.afternoonSlots} available`}
+                            </button>
+                          </td>
+
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                            <button
+                              className="text-indigo-600 hover:text-indigo-900"
+                              onClick={async () => {
+                                const selectSlot = selectedSlot[course.id];
+                                const selectedFacultyId =
+                                  selectedFaculties[course.id];
+
+                                if (!selectedFacultyId) {
+                                  alert("Please select a faculty first!");
+                                  return;
                                 }
 
-                                alert("Slot(s) allocated successfully!");
-                                // Reset selection after allocation
-                                setSelectedSlot((prev) => ({
-                                  ...prev,
-                                  [course.id]: { FN: false, AN: false },
-                                }));
+                                if (
+                                  !selectSlot ||
+                                  (!selectSlot.FN && !selectSlot.AN)
+                                ) {
+                                  alert("Please select a slot first!");
+                                  return;
+                                }
 
-                                await fetchCourses();
-                              } catch (error) {
-                                console.error("Error:", error);
-                                alert("Something went wrong!");
-                              }
-                            }}
-                          >
-                            Allocate
-                          </button>
-                        </td>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                          <div
-                            className="relative group inline-block"
-                            onMouseEnter={() =>
-                              fetchcoursewiseDetails(
-                                course.courseCode,
-                                course.stream
-                              )
-                            }
-                          >
-                            <button className="rounded-full bg-gray-400 text-white w-5 h-5 ml-2 flex items-center justify-center text-xs cursor-pointer">
-                              i
-                            </button>
+                                try {
+                                  // Collect all selected slots
+                                  const selectedSlotTypes = [];
+                                  if (selectSlot.FN)
+                                    selectedSlotTypes.push("FN");
+                                  if (selectSlot.AN)
+                                    selectedSlotTypes.push("AN");
 
-                            {/* Tooltip Box - positioned to the left */}
-                            <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden group-hover:block bg-white border border-gray-300 shadow-lg p-2 rounded-lg text-sm pointer-events-none w-56">
-                              <table className="table-auto text-left text-xs w-full">
-                                <thead>
-                                  <tr className="font-semibold border-b">
-                                    <th className="pr-2 py-1">Faculty</th>
-                                    <th className="pr-2 py-1">FN</th>
-                                    <th className="py-1">AN</th>
-                                  </tr>
-                                </thead>
+                                  const response = await fetch(
+                                    "http://localhost:3001/api/allocate-slot",
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        courseId: course.id,
+                                        F_N: selectSlot.FN,
+                                        A_N: selectSlot.AN,
+                                        Faculty: selectedFacultyId.name,
+                                        Facultyempid: selectedFacultyId.empId,
+                                        Course: course,
+                                      }),
+                                    }
+                                  );
 
-                                <tbody>
-                                  {coursewiseDetails[uniqueKey]?.map((f, idx) => {
-                                    return (
-                                      <tr key={idx}>
-                                        <td className="pr-2 py-1">{f.name || "No name"}</td>
-                                        <td className="pr-2 py-1">{f.fn ? "yes" : "no"}</td>
-                                        <td className="py-1">{f.an ? "yes" : "no"}</td>
-                                      </tr>
+                                  const data = await response.json();
+                                  if (!response.ok) {
+                                    alert(
+                                      data.message || `Failed to allocate slot.`
                                     );
-                                  })}
-                                </tbody>
+                                    return; // stop if any request fails
+                                  }
 
-                              </table>
+                                  alert("Slot(s) allocated successfully!");
+                                  // Reset selection after allocation
+                                  setSelectedSlot((prev) => ({
+                                    ...prev,
+                                    [course.id]: { FN: false, AN: false },
+                                  }));
+
+                                  await fetchCourses();
+                                } catch (error) {
+                                  console.error("Error:", error);
+                                  alert("Something went wrong!");
+                                }
+                              }}
+                            >
+                              Allocate
+                            </button>
+                          </td>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                            <div
+                              className="relative group inline-block"
+                              onMouseEnter={() =>
+                                fetchcoursewiseDetails(
+                                  course.courseCode,
+                                  course.stream
+                                )
+                              }
+                            >
+                              <button className="rounded-full bg-gray-400 text-white w-5 h-5 ml-2 flex items-center justify-center text-xs cursor-pointer">
+                                i
+                              </button>
+
+                              {/* Tooltip Box - positioned to the left */}
+                              <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden group-hover:block bg-white border border-gray-300 shadow-lg p-2 rounded-lg text-sm pointer-events-none w-56">
+                                <table className="table-auto text-left text-xs w-full">
+                                  <thead>
+                                    <tr className="font-semibold border-b">
+                                      <th className="pr-2 py-1">Faculty</th>
+                                      <th className="pr-2 py-1">FN</th>
+                                      <th className="py-1">AN</th>
+                                    </tr>
+                                  </thead>
+
+                                  <tbody>
+                                    {coursewiseDetails[uniqueKey]?.map(
+                                      (f, idx) => {
+                                        return (
+                                          <tr key={idx}>
+                                            <td className="pr-2 py-1">
+                                              {f.name || "No name"}
+                                            </td>
+                                            <td className="pr-2 py-1">
+                                              {f.fn ? "yes" : "no"}
+                                            </td>
+                                            <td className="py-1">
+                                              {f.an ? "yes" : "no"}
+                                            </td>
+                                          </tr>
+                                        );
+                                      }
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                      </tr>
-                    );})}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {filteredCourses.length === 0 && (
                       <tr>
                         <td
