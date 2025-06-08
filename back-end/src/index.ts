@@ -529,6 +529,16 @@ app.get("/each-course-allocation", async (req, res) => {
 
 app.post("/api/singleDataEntryCourse", async (req, res) => {
   try {
+    const toNull = (val: unknown): string | number | null => {
+      if (typeof val === "string") {
+        const trimmed = val.trim();
+        return trimmed === "" || trimmed === " " ? null : trimmed;
+      }
+      if (val === undefined || val === null) return null;
+      if (typeof val === "number") return val;
+      return String(val).trim() || null; // fallback for other types
+    };
+        
     const {
       year,
       stream,
@@ -547,34 +557,55 @@ app.post("/api/singleDataEntryCourse", async (req, res) => {
       basket,
     } = req.body;
 
+    const sanitizedRow = {
+      year: toNull(year),
+      stream: toNull(stream),
+      courseType: toNull(courseType),
+      courseCode: toNull(courseCode),
+      courseTitle: toNull(courseTitle),
+      lectureHours: toNull(lectureHours),
+      tutorialHours: toNull(tutorialHours),
+      practicalHours: toNull(practicalHours),
+      credits: toNull(credits),
+      prerequisites: toNull(prerequisites),
+      school: toNull(school),
+      forenoonSlots: toNull(forenoonSlots),
+      afternoonSlots: toNull(afternoonSlots),
+      totalSlots: toNull(totalSlots),
+      basket: toNull(basket),
+    };
+
+    const rowHash = computeRowHash(sanitizedRow);
+    
     const query = `
       INSERT INTO course_table(
          year, stream, "courseType", "courseCode", "courseTitle",
         "lectureHours", "tutorialHours", "practicalHours", "credits",
         "prerequisites", "school", "forenoonSlots", "afternoonSlots",
-        "totalSlots", basket
+        "totalSlots", basket,row_hash
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
     `;
 
     await pool.query(query, [
-      year,
-      stream,
-      courseType,
-      courseCode,
-      courseTitle,
-      lectureHours,
-      tutorialHours,
-      practicalHours,
-      credits,
-      prerequisites,
-      school,
-      forenoonSlots,
-      afternoonSlots,
-      totalSlots,
-      basket,
-    ]);
-
+      sanitizedRow.year,
+      sanitizedRow.stream,
+      sanitizedRow.courseType,
+      sanitizedRow.courseCode,
+      sanitizedRow.courseTitle,
+      sanitizedRow.lectureHours,
+      sanitizedRow.tutorialHours,
+      sanitizedRow.practicalHours,
+      sanitizedRow.credits,
+      sanitizedRow.prerequisites,
+      sanitizedRow.school,
+      sanitizedRow.forenoonSlots,
+      sanitizedRow.afternoonSlots,
+      sanitizedRow.totalSlots,
+      sanitizedRow.basket,
+      rowHash,
+    ]);    
+    
     res.status(200).json({ message: "Course inserted successfully" });
   } catch (err) {
     console.error("Error inserting course:", err);
@@ -584,11 +615,35 @@ app.post("/api/singleDataEntryCourse", async (req, res) => {
 
 app.post("/api/singleDataEntryFaculty", async (req, res) => {
   try {
-    const {name, empid, photo_url, email, school } = req.body;
+    const toNull = (val: unknown): string | null => {
+      if (typeof val === "string") {
+        const trimmed = val.trim();
+        return trimmed === "" || trimmed === " " ? null : trimmed;
+      }
+      if (val === undefined || val === null) return null;
+      return String(val).trim() || null;
+    };
 
-    if (!name || !empid) {
-      res.status(400).json({ error: "Name and empid are required." });
-      return;
+    const { name, empid, photo_url, email, school } = req.body;
+
+    // Required field validation
+    if (!empid) {
+      res.status(400).json({ error: "Employee ID is required." });
+      return
+    }
+
+    const sanitizedData = {
+      name: toNull(name),
+      empid: toNull(empid),
+      photo_url: toNull(photo_url),
+      email: toNull(email),
+      school: toNull(school),
+    };
+
+    // Additional validation for required fields after sanitization
+    if (!sanitizedData.empid) {
+      res.status(400).json({ error: "Valid Employee ID is required." });
+      return
     }
 
     const query = `
@@ -596,15 +651,37 @@ app.post("/api/singleDataEntryFaculty", async (req, res) => {
         name, empid, photo_url, email, school
       )
       VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (empid) DO UPDATE SET
+        name = EXCLUDED.name,
+        photo_url = EXCLUDED.photo_url,
+        email = EXCLUDED.email,
+        school = EXCLUDED.school
     `;
 
-    await pool.query(query, [name, empid, photo_url, email, school]);
+    await pool.query(query, [
+      sanitizedData.name,
+      sanitizedData.empid,
+      sanitizedData.photo_url,
+      sanitizedData.email,
+      sanitizedData.school,
+    ]);
 
-    res.status(200).json({ message: "Faculty inserted successfully" });
+    res.status(200).json({
+      message: "Faculty data processed successfully",
+      data: sanitizedData,
+    });
   } catch (err: any) {
-    console.error("Insertion error:", err);
+    console.error("Database operation error:", err);
 
-    res.status(500).json({ error: "Failed to insert faculty." });
+    const errorMessage =
+      err.code === "23505"
+        ? "Faculty with this Employee ID already exists"
+        : "Failed to process faculty data";
+
+    res.status(500).json({
+      error: errorMessage,
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
   }
 });
 
