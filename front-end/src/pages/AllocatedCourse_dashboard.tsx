@@ -10,6 +10,7 @@ export default function AllocatedCourses() {
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [faculty, setFaculty] = useState<Faculty[]>([]);
   const [hasError, setHasError] = useState(false);
+  const [departments, setDepartments] = useState<string[]>([]);
   
   const navigate=useNavigate();
 
@@ -24,6 +25,10 @@ export default function AllocatedCourses() {
         const data: Faculty[] = await response.json();
         setFaculty(data);
         setLoading(false);
+        const uniqueDepartments = Array.from(
+          new Set(data.map((faculty) => faculty.school))
+        );
+        setDepartments(uniqueDepartments);
       }
     } catch (error) {
       console.error("❌ Failed to fetch courses:", error);
@@ -63,7 +68,7 @@ export default function AllocatedCourses() {
           {/* Search and Filter */}
           <div className="flex flex-col md:flex-row items-center mb-8 gap-4">
             <select
-              aria-label="Filter by Department" // Added aria-label for accessibility
+              aria-label="Filter by Department"
               className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={departmentFilter}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -71,6 +76,11 @@ export default function AllocatedCourses() {
               }
             >
               <option value="all">All Departments</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
             </select>
 
             <Link to="/full-table">

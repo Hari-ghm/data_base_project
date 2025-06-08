@@ -354,6 +354,7 @@ export default function CourseAllocation() {
                                     }
                                     placeholder="Select Faculty"
                                     className="text-sm"
+                                    menuPlacement="auto"
                                   />
                                 </div>
                               </td>

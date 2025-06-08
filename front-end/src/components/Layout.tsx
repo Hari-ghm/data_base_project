@@ -43,7 +43,7 @@ export default function Layout() {
                 className="inline-flex items-center px-7 pt-1 text-sm font-medium text-gray-900"
               >
                 <BookOpen className="mr-2 h-4 w-4" />
-                Upload csv
+                Data insertion and deletion
               </Link>
             </div>
           </div>
