@@ -1,18 +1,18 @@
-﻿s_no,name,empid,photo_url,email,school
-1,Dr. YCS. Xavier,50070,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50070-PP-with-tie-255x319.jpg,xavier@vitfaculty.ac.in,SCOPE
-2,Dr. Niraj Kumar,50260,https://chennai.vit.ac.in/wp-content/uploads/2020/08/Dr.-Niraj-Kumar-50260-255x319.jpg,niraj@vitfaculty.ac.in,SCOPE
-3,Dr. Benil T,52799,https://chennai.vit.ac.in/wp-content/uploads/2022/09/52799.jpg,benil@vitfaculty.ac.in,SCOPE
-4,Prof. Prathima T S,53112,https://chennai.vit.ac.in/wp-content/uploads/2022/11/52837-1-255x319.jpg,prathima@vitfaculty.ac.in,SCOPE
-5,Dr. Logesh R,56150,https://chennai.vit.ac.in/wp-content/uploads/2022/04/52244-255x319.jpg,logesh@vitfaculty.ac.in,SCOPE
-6,Dr. Bindu B,54796,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50729_Bindu-Bindu-Boby-1-255x319.jpg,bindu@vitfaculty.ac.in,SCOPE
-7,Dr. Om Namha Shivay,52271,https://chennai.vit.ac.in/wp-content/uploads/2022/05/52271.jpg,nanhashivay@vitfaculty.ac.in,SCOPE
-8,Dr. Vinitha G,57912,https://chennai.vit.ac.in/wp-content/uploads/2021/08/50143-255x319.jpg,vinitha@vitfaculty.ac.in,SCOPE
-9,Dr. Anisha Natarajan,50079,https://chennai.vit.ac.in/wp-content/uploads/2023/12/53383.jpg,anisha@vitfaculty.ac.in,SCOPE
-10,Dr. Ravi Sankar A,50671,https://chennai.vit.ac.in/wp-content/uploads/2020/07/50165-Dr.Ravi-Sankar.A.jpg,ravi@vitfaculty.ac.in,SCOPE
-11,Dr. Reena Monica P,51478,https://chennai.vit.ac.in/wp-content/uploads/2020/01/Dr.Reena-Monica-P.jpg,reena@vitfaculty.ac.in,SCOPE
-12,Dr. John Sahaya Rani Alex,51632,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50131-Dr.-John-Sahaya-Rani-Alex.jpg,john@vitfaculty.ac.in,SCOPE
-13,Dr. Brintha Therese A,53001,https://chennai.vit.ac.in/wp-content/uploads/2021/08/50030.jpg,brintha@vitfaculty.ac.in,SCOPE
-14,Dr. Vigneswaran T,54893,https://chennai.vit.ac.in/wp-content/uploads/2020/07/50385-Vignesh-vlsi-1.jpg,vigneshwaran@vitfaculty.ac.in,SCOPE
-15,Dr. Ganesan R,56300,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50338_SCOPE.jpg,ganesan@vitfaculty.ac.in,SCOPE
-16,Dr. Parvathi R,51098,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50186_parvathi-1.jpg,parvathi@vitfaculty.ac.in,SCOPE
-17,Dr. Viswanathan V,50123,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50300-Viswanathan-V.jpg,vishwanadhan@vitfaculty.ac.in,SCOPE
+﻿name,empid,photo_url,email,school
+Dr. YCS. Xavier,50070,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50070-PP-with-tie-255x319.jpg,xavier@vitfaculty.ac.in,SCOPE
+Dr. Niraj Kumar,50260,https://chennai.vit.ac.in/wp-content/uploads/2020/08/Dr.-Niraj-Kumar-50260-255x319.jpg,niraj@vitfaculty.ac.in,SCOPE
+Dr. Benil T,52799,https://chennai.vit.ac.in/wp-content/uploads/2022/09/52799.jpg,benil@vitfaculty.ac.in,SCOPE
+Prof. Prathima T S,53112,https://chennai.vit.ac.in/wp-content/uploads/2022/11/52837-1-255x319.jpg,prathima@vitfaculty.ac.in,SCOPE
+Dr. Logesh R,56150,https://chennai.vit.ac.in/wp-content/uploads/2022/04/52244-255x319.jpg,logesh@vitfaculty.ac.in,SCOPE
+Dr. Bindu B,54796,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50729_Bindu-Bindu-Boby-1-255x319.jpg,bindu@vitfaculty.ac.in,SCOPE
+Dr. Om Namha Shivay,52271,https://chennai.vit.ac.in/wp-content/uploads/2022/05/52271.jpg,nanhashivay@vitfaculty.ac.in,SCOPE
+Dr. Vinitha G,57912,https://chennai.vit.ac.in/wp-content/uploads/2021/08/50143-255x319.jpg,vinitha@vitfaculty.ac.in,SCOPE
+Dr. Anisha Natarajan,50079,https://chennai.vit.ac.in/wp-content/uploads/2023/12/53383.jpg,anisha@vitfaculty.ac.in,SCOPE
+Dr. Ravi Sankar A,50671,https://chennai.vit.ac.in/wp-content/uploads/2020/07/50165-Dr.Ravi-Sankar.A.jpg,ravi@vitfaculty.ac.in,SCOPE
+Dr. Reena Monica P,51478,https://chennai.vit.ac.in/wp-content/uploads/2020/01/Dr.Reena-Monica-P.jpg,reena@vitfaculty.ac.in,SCOPE
+Dr. John Sahaya Rani Alex,51632,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50131-Dr.-John-Sahaya-Rani-Alex.jpg,john@vitfaculty.ac.in,SCOPE
+Dr. Brintha Therese A,53001,https://chennai.vit.ac.in/wp-content/uploads/2021/08/50030.jpg,brintha@vitfaculty.ac.in,SCOPE
+Dr. Vigneswaran T,54893,https://chennai.vit.ac.in/wp-content/uploads/2020/07/50385-Vignesh-vlsi-1.jpg,vigneshwaran@vitfaculty.ac.in,SCOPE
+Dr. Ganesan R,56300,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50338_SCOPE.jpg,ganesan@vitfaculty.ac.in,SCOPE
+Dr. Parvathi R,51098,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50186_parvathi-1.jpg,parvathi@vitfaculty.ac.in,SCOPE
+Dr. Viswanathan V,50123,https://chennai.vit.ac.in/wp-content/uploads/2020/08/50300-Viswanathan-V.jpg,vishwanadhan@vitfaculty.ac.in,SCOPE

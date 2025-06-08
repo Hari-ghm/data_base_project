@@ -1,13 +1,95 @@
 import express, { Request, Response } from "express";
 import { pool } from "./db";
 import cors from "cors";
-
+import crypto from "crypto";
 
 const app = express();
 const port = 3001;
 
 app.use(express.json());
 app.use(cors());
+
+const faculty_table_creation_query = `
+      CREATE TABLE IF NOT EXISTS faculty_table (
+        s_no SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        empid INTEGER UNIQUE NOT NULL,
+        photo_url TEXT,
+        email TEXT,
+        school TEXT
+      );
+      
+    `;
+
+const course_table_creation_query = `
+CREATE TABLE IF NOT EXISTS course_table (
+  id SERIAL PRIMARY KEY,
+  year INTEGER,
+  stream TEXT,
+  "courseType" TEXT,
+  "courseCode" TEXT,
+  "courseTitle" TEXT,
+  "lectureHours" INTEGER,
+  "tutorialHours" INTEGER,
+  "practicalHours" INTEGER,
+  "credits" INTEGER,
+  "prerequisites" TEXT,
+  school TEXT,
+  "forenoonSlots" INTEGER,
+  "afternoonSlots" INTEGER,
+  "totalSlots" INTEGER,
+  basket TEXT,
+  row_hash TEXT UNIQUE 
+);
+`;
+
+const allocated_courses_creation_query = `CREATE TABLE IF NOT EXISTS allocated_courses (
+  id SERIAL PRIMARY KEY,
+  year INTEGER ,
+  stream TEXT ,
+  "courseType" TEXT ,
+  "courseCode" TEXT ,
+  "courseTitle" TEXT ,
+  "lectureHours" INTEGER,
+  "tutorialHours" INTEGER ,
+  "practicalHours" INTEGER,
+  credits INTEGER,
+  prerequisites TEXT,
+  school TEXT,
+  "forenoonSlots" boolean,
+  "afternoonSlots"boolean,
+  faculty TEXT NOT NULL,
+  basket TEXT ,
+  empid INTEGER NOT NULL
+);`;
+
+const computeRowHash = (row: any): string => {
+  const fields = [
+    row["year"],
+    row["stream"],
+    row["courseType"],
+    row["courseCode"],
+    row["courseTitle"],
+    row["lectureHours"],
+    row["tutorialHours"],
+    row["practicalHours"],
+    row["credits"],
+    row["prerequisites"],
+    row["school"],
+    row["forenoonSlots"],
+    row["afternoonSlots"],
+    row["totalSlots"],
+    row["basket"],
+  ];
+
+  const normalized = fields.map((val) => {
+    if (val === null || val === undefined) return "";
+    return val.toString().trim().toLowerCase();
+  });
+
+  const stringToHash = normalized.join("|");
+  return crypto.createHash("sha256").update(stringToHash).digest("hex");
+};
 
 
 // Health check route
@@ -16,7 +98,7 @@ app.get("/", async (req, res) => {
   res.send(result.rows[0]);
 });
 
-// Courses route
+// fetch data from course table and display in CourseAllocation page
 app.get("/courses", async (req, res) => {
   try {
     const result = await pool.query(
@@ -24,12 +106,12 @@ app.get("/courses", async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error("🔥 Error fetching courses:", error);
+    //  console.error("🔥 Error fetching courses:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
-//get request for faculty
+// fetch data from faculty table and display in CourseAllocation page Faculty dropdown
 app.get("/faculties", async (req, res) => {
   try {
     const result = await pool.query(
@@ -37,7 +119,7 @@ app.get("/faculties", async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error("🔥 Error fetching faculty:", error);
+    // console.error("🔥 Error fetching faculty:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -55,7 +137,7 @@ app.get("/full-table", async (req, res) => {
   }
 });
 
-//get request for faculty timetable
+// fetch data from allocatedCourses for each individual faculty
 app.get("/allocated-courses", async (req, res) => {
   const employeeid = parseInt(req.query.empid as string, 10);
   
@@ -78,12 +160,15 @@ app.get("/allocated-courses", async (req, res) => {
 });
 
 
-// POST request handler for /api/allocate-slot
+// POST request handler for slot allocation
 app.post("/api/allocate-slot", async (req: Request, res: Response) => {
   const { courseId, F_N, A_N,Course:course,Faculty:faculty,Facultyempid} = req.body;
   const employeeid = parseInt(Facultyempid, 10);
-  
+  const client = await pool.connect();
   try {
+    await client.query(course_table_creation_query);
+    await client.query(allocated_courses_creation_query);
+  
     if (F_N && A_N) {
       await pool.query(
         'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" - 1, "afternoonSlots" = "afternoonSlots" - 1 WHERE id = $1 AND "forenoonSlots" > 0 AND "afternoonSlots" > 0',
@@ -192,7 +277,7 @@ app.post("/api/process-csv", async (req: Request, res: Response) => {
   const client = await pool.connect();
 
   try {
-    await client.query("BEGIN");
+    await client.query(course_table_creation_query);
 
     let insertedCount = 0;
 
@@ -204,11 +289,31 @@ app.post("/api/process-csv", async (req: Request, res: Response) => {
       const n = parseInt(val, 10);
       return isNaN(n) ? null : n;
     };
+    
+    const REQUIRED_COLUMNS = [
+      "year", "stream", "courseType", "courseCode", "courseTitle",
+      "lectureHours", "tutorialHours", "practicalHours", "credits",
+      "prerequisites", "school", "forenoonSlots", "afternoonSlots",
+      "totalSlots", "basket"
+    ];
+
+    const csvHeaders = Object.keys(rows[0] || {});
+    const missingHeaders = REQUIRED_COLUMNS.filter(
+      (col) => !csvHeaders.includes(col)
+    );
+    
+    
+    if (missingHeaders.length > 0) {
+      res.status(400).json({
+        message: "CSV file is missing required columns.",
+        missingColumns: missingHeaders,
+      });
+      return;
+    }
 
     for (const row of rows) {
-
+      const rowHash = computeRowHash(row);
       const values = [
-        toNull(row["id"]), // Include ID
         toNull(row["year"]),
         toNull(row["stream"]),
         toNull(row["courseType"]),
@@ -224,24 +329,25 @@ app.post("/api/process-csv", async (req: Request, res: Response) => {
         toInt(row["afternoonSlots"]),
         toInt(row["totalSlots"]),
         toNull(row["basket"]),
+        rowHash
       ];
 
       const insertQuery = `
-      INSERT INTO "course_table" (
-        "id", "year", "stream", "courseType", "courseCode", "courseTitle",
-        "lectureHours", "tutorialHours", "practicalHours", "credits",
-        "prerequisites", "school", "forenoonSlots", "afternoonSlots",
-        "totalSlots", "basket"
-      )
-      VALUES (
-        $1, $2, $3, $4, $5, $6,
-        $7, $8, $9, $10,
-        $11, $12, $13, $14,
-        $15, $16
-      )
-      ON CONFLICT ("id") DO NOTHING;
-    `;
-
+        INSERT INTO course_table (
+          year, stream, "courseType", "courseCode", "courseTitle",
+          "lectureHours", "tutorialHours", "practicalHours", "credits",
+          "prerequisites", school, "forenoonSlots", "afternoonSlots",
+          "totalSlots", basket, row_hash
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6,
+          $7, $8, $9, $10,
+          $11, $12, $13, $14,
+          $15, $16
+        )
+        ON CONFLICT (row_hash) DO NOTHING;
+        `;
+      
       const result = await client.query(insertQuery, values);
       if (result.rowCount && result.rowCount > 0) {
         insertedCount++;
@@ -270,8 +376,82 @@ app.post("/api/process-csv", async (req: Request, res: Response) => {
   }
 });
 
+// insertion of faculty datas.csv to database
+app.post("/api/process-Facultycsv", async (req: Request, res: Response) => {
+  const rows = req.body.data;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    // Remove 'return' keyword here
+    res.status(400).json({ message: "Bad Request: No data rows provided." });
+    return; // Use a plain return to exit the function after sending response
+  }
+
+  // Get a client from the pool to run multiple queries in a transaction
+  const client = await pool.connect();
+
+  try {
+    await client.query(faculty_table_creation_query);    
+
+    let insertedCount = 0;
+
+    const toNull = (val: any): string | null => {
+      if (val === undefined || val === null || val.toString().trim() === "")
+        return null;
+      return val.toString().trim();
+    };
+
+    const toInt = (val: any): number | null => {
+      const trimmed = val?.toString().trim();
+      if (!trimmed || isNaN(trimmed)) return null;
+      return parseInt(trimmed, 10);
+    };
+    
+
+    for (const row of rows) {
+      const values = [
+        toNull(row["name"]),
+        toNull(row["empid"]),
+        toNull(row["photo_url"]),
+        toNull(row["email"]),
+        toNull(row["school"]),
+      ];
+
+      const insertQuery = `
+      INSERT INTO "faculty_table" (
+        "name", "empid", "photo_url", "email", "school"
+      )
+      VALUES (
+        $1, $2, $3, $4, $5
+      )
+      ON CONFLICT ("empid") DO NOTHING;
+    `;
+
+      const result = await client.query(insertQuery, values);
+      if (result.rowCount && result.rowCount > 0) {
+        insertedCount++;
+      }
+    }
+
+    await client.query("COMMIT");
+    res.status(200).json({
+      message: `Successfully processed CSV. Inserted ${insertedCount} new rows.`,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("🔥 Error processing CSV data:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({
+      message: "Internal Server Error processing CSV data.",
+      error: errorMessage,
+    });
+  } finally {
+    client.release();
+  }
+});
+
 // post request to delete course details from faculty table
-app.post("/delete-course", async (req, res) => {
+app.post("/delete-course-individual", async (req, res) => {
   const { empid, courseCode, afternoonSlots, forenoonSlots } = req.body;
 
   if (!empid || !courseCode) {
@@ -343,6 +523,238 @@ app.get("/each-course-allocation", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch faculty info" });
+  }
+});
+
+
+app.post("/api/singleDataEntryCourse", async (req, res) => {
+  try {
+    const {
+      year,
+      stream,
+      courseType,
+      courseCode,
+      courseTitle,
+      lectureHours,
+      tutorialHours,
+      practicalHours,
+      credits,
+      prerequisites,
+      school,
+      forenoonSlots,
+      afternoonSlots,
+      totalSlots,
+      basket,
+    } = req.body;
+
+    const query = `
+      INSERT INTO course_table(
+         year, stream, "courseType", "courseCode", "courseTitle",
+        "lectureHours", "tutorialHours", "practicalHours", "credits",
+        "prerequisites", "school", "forenoonSlots", "afternoonSlots",
+        "totalSlots", basket
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+    `;
+
+    await pool.query(query, [
+      year,
+      stream,
+      courseType,
+      courseCode,
+      courseTitle,
+      lectureHours,
+      tutorialHours,
+      practicalHours,
+      credits,
+      prerequisites,
+      school,
+      forenoonSlots,
+      afternoonSlots,
+      totalSlots,
+      basket,
+    ]);
+
+    res.status(200).json({ message: "Course inserted successfully" });
+  } catch (err) {
+    console.error("Error inserting course:", err);
+    res.status(500).json({ error: "Failed to insert course" });
+  }
+});
+
+app.post("/api/singleDataEntryFaculty", async (req, res) => {
+  try {
+    const {name, empid, photo_url, email, school } = req.body;
+
+    if (!name || !empid) {
+      res.status(400).json({ error: "Name and empid are required." });
+      return;
+    }
+
+    const query = `
+      INSERT INTO faculty_table(
+        name, empid, photo_url, email, school
+      )
+      VALUES ($1, $2, $3, $4, $5)
+    `;
+
+    await pool.query(query, [name, empid, photo_url, email, school]);
+
+    res.status(200).json({ message: "Faculty inserted successfully" });
+  } catch (err: any) {
+    console.error("Insertion error:", err);
+
+    res.status(500).json({ error: "Failed to insert faculty." });
+  }
+});
+
+app.post("/delete-grouped-faculties", async (req, res) => {
+  const { empids: s_nos } = req.body;
+
+  if (!Array.isArray(s_nos) || s_nos.length === 0) {
+    res
+      .status(400)
+      .json({ error: "empids must be a non-empty array of s_no values" });
+    return
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Step 1: Get empids from s_no
+    const empidResult = await client.query(
+      `SELECT empid FROM faculty_table WHERE s_no = ANY($1::integer[])`,
+      [s_nos]
+    );
+    const empids = empidResult.rows.map((row) => row.empid);
+
+    if (empids.length === 0) {
+      throw new Error("No matching faculty empids found.");
+    }
+
+    // Step 2: Get allocations for those empids
+    const allocationResult = await client.query(
+      `SELECT empid, "courseCode", year, "courseTitle", "forenoonSlots", "afternoonSlots"
+       FROM allocated_courses
+       WHERE empid = ANY($1::integer[])`,
+      [empids]
+    );
+
+    const allocations = allocationResult.rows;
+    
+    // Step 3: For each allocation, update course_table slot counts
+    for (const {
+      courseCode,
+      year,
+      courseTitle,
+      forenoonSlots,
+      afternoonSlots,
+    } of allocations) {
+      if (forenoonSlots) {
+        await client.query(
+          `UPDATE course_table
+           SET "forenoonSlots" = "forenoonSlots" + 1
+           WHERE "courseCode" = $1 AND "year" = $2 AND "courseTitle" = $3`,
+          [courseCode, year, courseTitle]
+        );
+      }
+
+      if (afternoonSlots) {
+        await client.query(
+          `UPDATE course_table
+           SET "afternoonSlots" = "afternoonSlots" + 1
+           WHERE "courseCode" = $1 AND "year" = $2 AND "courseTitle" = $3`,
+          [courseCode, year, courseTitle]
+        );
+      }
+    }
+
+    // Step 4: Delete from allocated_courses
+    await client.query(
+      `DELETE FROM allocated_courses WHERE empid = ANY($1::integer[])`,
+      [empids]
+    );
+
+    // Step 5: Delete from faculty_table
+    await client.query(
+      `DELETE FROM faculty_table WHERE s_no = ANY($1::integer[])`,
+      [s_nos]
+    );
+
+    await client.query("COMMIT");
+
+    res
+      .status(200)
+      .json({ message: "Faculty and allocations deleted successfully." });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("❌ Faculty deletion failed:", error);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    client.release();
+  }
+});
+
+app.post("/delete-grouped-courses", async (req, res) => {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+     res.status(400).json({ error: "ids must be a non-empty array" });
+     return
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Step 1: Get course details from course_table for each ID
+    const courseResult = await client.query(
+      `SELECT id, "courseTitle", "courseCode", year, school, stream
+       FROM course_table
+       WHERE id = ANY($1::integer[])`,
+      [ids]
+    );
+
+    const courseRows = courseResult.rows;
+    
+    if (courseRows.length === 0) {
+      throw new Error("No matching courses found.");
+    }
+
+    // Step 2: Delete from allocated_courses based on matching details
+    for (const {
+      courseTitle,
+      courseCode,
+      year,
+      school,
+      stream,
+    } of courseRows) {
+      await client.query(
+        `DELETE FROM allocated_courses
+         WHERE "courseTitle" = $1 AND "courseCode" = $2 AND year = $3 AND school = $4 AND stream = $5`,
+        [courseTitle, courseCode, year, school, stream]
+      );
+    }
+
+    // Step 3: Delete from course_table using ID
+    await client.query(
+      `DELETE FROM course_table WHERE id = ANY($1::integer[])`,
+      [ids]
+    );
+
+    await client.query("COMMIT");
+
+    res
+      .status(200)
+      .json({ message: "Courses and their allocations deleted successfully." });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("❌ Error deleting grouped courses:", error);
+    res.status(500).json({ error: "Internal server error" });
+  } finally {
+    client.release();
   }
 });
 

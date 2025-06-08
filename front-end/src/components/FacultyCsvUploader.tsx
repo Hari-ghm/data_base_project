@@ -6,7 +6,7 @@ interface CsvData {
   rows: Record<string, string>[];
 }
 
-export function CsvUploader() {
+export function FacultyCsvUploader() {
   const [csvData, setCsvData] = useState<CsvData | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -81,7 +81,7 @@ export function CsvUploader() {
 
     // --- IMPORTANT: Replace with your actual backend API endpoint ---
     // Use the full URL since frontend and backend are on different ports
-    const apiUrl = "http://localhost:3001/api/process-csv";
+    const apiUrl = "http://localhost:3001/api/process-Facultycsv";
     // ---
 
     setIsSubmitting(true);

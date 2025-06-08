@@ -69,7 +69,7 @@ export default function FacultyTimetable() {
   const handleDelete = async (courseCode: string,afternoonSlots: boolean,forenoonSlots:boolean) => {
     try {
       
-      const response = await fetch("http://localhost:3001/delete-course", {
+      const response = await fetch("http://localhost:3001/delete-course-individual", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -241,7 +241,7 @@ export default function FacultyTimetable() {
 
       <h2 className="text-xl font-semibold mb-4">Allocated Courses</h2>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="error-message">Faculty is not allocated any course</div>}
 
       {courses.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
