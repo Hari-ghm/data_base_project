@@ -102,7 +102,7 @@ app.get("/", async (req, res) => {
 app.get("/courses", async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM "course_table" ORDER BY "stream" ASC'
+      'SELECT * FROM "course_table" ORDER BY "courseTitle" ASC'
     );
     res.json(result.rows);
   } catch (error) {
@@ -159,76 +159,132 @@ app.get("/allocated-courses", async (req, res) => {
   }
 });
 
-
-// POST request handler for slot allocation
 app.post("/api/allocate-slot", async (req: Request, res: Response) => {
-  const { courseId, F_N, A_N,Course:course,Faculty:faculty,Facultyempid} = req.body;
-  const employeeid = parseInt(Facultyempid, 10);
+  const {
+    courseId,
+    F_N,
+    A_N,
+    Course: course,
+    Faculty: faculty,
+    Facultyempid,
+  } = req.body;
+  const empid = parseInt(Facultyempid, 10);
   const client = await pool.connect();
+
   try {
     await client.query(course_table_creation_query);
     await client.query(allocated_courses_creation_query);
-  
-    if (F_N && A_N) {
-      await pool.query(
-        'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" - 1, "afternoonSlots" = "afternoonSlots" - 1 WHERE id = $1 AND "forenoonSlots" > 0 AND "afternoonSlots" > 0',
-        [courseId]
-      );
 
-      await pool.query(
+    const result = await client.query(
+      `SELECT "forenoonSlots", "afternoonSlots" FROM allocated_courses
+       WHERE empid = $1 AND "courseCode" = $2 AND stream = $3`,
+      [empid, course.courseCode, course.stream]
+    );
+
+    const alreadyAllocated = result.rows[0];
+    const isUpdate = !!alreadyAllocated;
+
+    // === Decrement or increment based on slot change ===
+    if (isUpdate) {
+      const prevFN = alreadyAllocated.forenoonSlots;
+      const prevAN = alreadyAllocated.afternoonSlots;
+
+      // Forenoon Slot Change
+      if (prevFN !== F_N) {
+        if (F_N && !prevFN) {
+          // false → true: decrement FN
+          await client.query(
+            'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" - 1 WHERE id = $1 AND "forenoonSlots" > 0',
+            [courseId]
+          );
+        } else if (!F_N && prevFN) {
+          // true → false: increment FN
+          await client.query(
+            'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" + 1 WHERE id = $1',
+            [courseId]
+          );
+        }
+      }
+
+      // Afternoon Slot Change
+      if (prevAN !== A_N) {
+        if (A_N && !prevAN) {
+          // false → true: decrement AN
+          await client.query(
+            'UPDATE course_table SET "afternoonSlots" = "afternoonSlots" - 1 WHERE id = $1 AND "afternoonSlots" > 0',
+            [courseId]
+          );
+        } else if (!A_N && prevAN) {
+          // true → false: increment AN
+          await client.query(
+            'UPDATE course_table SET "afternoonSlots" = "afternoonSlots" + 1 WHERE id = $1',
+            [courseId]
+          );
+        }
+      }
+
+      // Update existing allocation
+      await client.query(
+        `UPDATE allocated_courses SET
+          "forenoonSlots" = $1,
+          "afternoonSlots" = $2,
+          faculty = $3
+         WHERE empid = $4 AND "courseCode" = $5 AND stream = $6`,
+        [F_N, A_N, faculty, empid, course.courseCode, course.stream]
+      );
+    } else {
+      // === Insert fresh allocation ===
+      if (F_N) {
+        await client.query(
+          'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" - 1 WHERE id = $1 AND "forenoonSlots" > 0',
+          [courseId]
+        );
+      }
+
+      if (A_N) {
+        await client.query(
+          'UPDATE course_table SET "afternoonSlots" = "afternoonSlots" - 1 WHERE id = $1 AND "afternoonSlots" > 0',
+          [courseId]
+        );
+      }
+
+      await client.query(
         `INSERT INTO allocated_courses (
           year, stream, "courseType", "courseCode", "courseTitle",
           "lectureHours","tutorialHours","practicalHours",credits,
-          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket,empid
+          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket, empid
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
         [
-          course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
-          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,A_N,faculty,course.basket,employeeid
-        ]
-      );
-
-
-    } else if (F_N) {
-      await pool.query(
-        'UPDATE course_table SET "forenoonSlots" = "forenoonSlots" - 1 WHERE id = $1 AND "forenoonSlots" > 0',
-        [courseId]
-      );
-
-      await pool.query(
-        `INSERT INTO allocated_courses (
-          year, stream, "courseType", "courseCode", "courseTitle",
-          "lectureHours","tutorialHours","practicalHours",credits,
-          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket,empid
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-        [
-          course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
-          course.practicalHours,course.credits,course.prerequisites,course.school,F_N,false,faculty,course.basket,employeeid
-        ]
-      );
-    } else if (A_N) {
-      await pool.query(
-        'UPDATE course_table SET "afternoonSlots" = "afternoonSlots" - 1 WHERE id = $1 AND "afternoonSlots" > 0',
-        [courseId]
-      );
-
-      await pool.query(
-        `INSERT INTO allocated_courses (
-          year, stream, "courseType", "courseCode", "courseTitle",
-          "lectureHours","tutorialHours","practicalHours",credits,
-          prerequisites, school, "forenoonSlots", "afternoonSlots", faculty, basket,empid
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
-        [
-          course.year,course.stream,course.courseType,course.courseCode,course.courseTitle,course.lectureHours,course.tutorialHours,
-          course.practicalHours,course.credits,course.prerequisites,course.school,false,A_N,faculty,course.basket,employeeid
+          course.year,
+          course.stream,
+          course.courseType,
+          course.courseCode,
+          course.courseTitle,
+          course.lectureHours,
+          course.tutorialHours,
+          course.practicalHours,
+          course.credits,
+          course.prerequisites,
+          course.school,
+          F_N,
+          A_N,
+          faculty,
+          course.basket,
+          empid,
         ]
       );
     }
 
-    //  Send a response back to frontend
-    res.json({ message: "Slot(s) allocated successfully." });
+    res.json({
+      message: isUpdate
+        ? "Slot(s) updated successfully."
+        : "Slot(s) allocated successfully.",
+    });
   } catch (err) {
     console.error("Error in allocate-slot:", err);
     res.status(500).json({ message: "Internal server error" });
+  } finally {
+    client.release();
   }
 });
 

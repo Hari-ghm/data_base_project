@@ -457,6 +457,30 @@ export default function CourseAllocation() {
                                       alert("Please select a slot first!");
                                       return;
                                     }
+                                    
+                                    const uniqueKey = `${course.courseCode}_${course.stream}`;
+                                    const existingAllocations =
+                                      coursewiseDetails[uniqueKey] || [];
+                                    const facultyAlloc =
+                                      existingAllocations.find(
+                                        (entry) =>
+                                          entry.name === selectedFacultyId.name
+                                      );
+
+                                      if (facultyAlloc) {
+                                        let allocationType = "";
+                                        if (facultyAlloc.fn && facultyAlloc.an)
+                                          allocationType = "both FN and AN";
+                                        else if (facultyAlloc.fn)
+                                          allocationType = "forenoon only";
+                                        else if (facultyAlloc.an)
+                                          allocationType = "afternoon only";
+
+                                        const shouldProceed = window.confirm(
+                                          `The faculty has already been allocated this course for ${allocationType}. Do you want to overwrite it?`
+                                        );
+                                        if (!shouldProceed) return;
+                                      }
 
                                     try {
                                       // Collect all selected slots
