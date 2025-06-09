@@ -176,7 +176,7 @@ export default function CourseAllocation() {
               className="text-green-500 cursor-pointer"
               onClick={() => navigate("/upload-csv")}
             >
-              upload csv{" "}
+              Data insertion and deletion{" "}
             </span>
             in Navbar
           </div>

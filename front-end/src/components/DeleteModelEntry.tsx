@@ -108,7 +108,19 @@ export const DeleteEntryModal: React.FC<DeleteEntryModalProps> = ({
         {loading ? (
           <p className="text-center">Loading...</p>
         ) : error ? (
-          <p className="text-center text-red-500">Failed to load data</p>
+          <div className="text-center text-red-600">
+            <p className="mb-4">
+              {type === "faculty"
+                ? "❌ Faculty table is not existing."
+                : "❌ Course table is not existing."}
+            </p>
+            <button
+              onClick={onClose}
+              className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Close
+            </button>
+          </div>
         ) : (
           <table className="w-full border">
             <thead>
@@ -169,20 +181,22 @@ export const DeleteEntryModal: React.FC<DeleteEntryModalProps> = ({
           </table>
         )}
 
-        <div className="flex justify-between mt-6">
-          <button
-            onClick={onClose}
-            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleDelete}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Delete Selected
-          </button>
-        </div>
+        {!error && (
+          <div className="flex justify-between mt-6">
+            <button
+              onClick={onClose}
+              className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Delete Selected
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

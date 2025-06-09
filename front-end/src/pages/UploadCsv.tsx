@@ -19,12 +19,11 @@ export default function UploadPage() {
           file have field corresponding to format given below (case sensitive)
         </p>
         <p className="mb-2">
-          <span className="font-bold">Format:</span> id | year | stream |
+          <span className="font-bold">Format:</span> year | stream |
           courseType | courseCode | courseTitle | lectureHours | tutorialHours |
           practicalHours | credits | prerequisites | school | forenoonSlots |
           afternoonSlots | totalSlots | basket
         </p>
-        <p className="font-bold">id is SERIAL no (1,2,3,4.....)</p>
         <CourseCsvUploader />
       </div>
 
@@ -35,10 +34,9 @@ export default function UploadPage() {
           file have field corresponding to format given below (case sensitive)
         </p>
         <p className="mb-2">
-          <span className="font-bold">Format:</span> s_no | name | empid |
+          <span className="font-bold">Format:</span> name | empid |
           photo_url | email | school
         </p>
-        <p className="font-bold">s_no is SERIAL no (1,2,3,4.....)</p>
         <FacultyCsvUploader />
       </div>
 

@@ -528,7 +528,9 @@ app.get("/each-course-allocation", async (req, res) => {
 
 
 app.post("/api/singleDataEntryCourse", async (req, res) => {
+  const client = await pool.connect();
   try {
+    await client.query(allocated_courses_creation_query);
     const toNull = (val: unknown): string | number | null => {
       if (typeof val === "string") {
         const trimmed = val.trim();
@@ -614,11 +616,13 @@ app.post("/api/singleDataEntryCourse", async (req, res) => {
 });
 
 app.post("/api/singleDataEntryFaculty", async (req, res) => {
+  const client = await pool.connect();
   try {
+    await client.query(faculty_table_creation_query);
     const toNull = (val: unknown): string | null => {
       if (typeof val === "string") {
         const trimmed = val.trim();
-        return trimmed === "" || trimmed === " " ? null : trimmed;
+        return trimmed === "" ? null : trimmed;
       }
       if (val === undefined || val === null) return null;
       return String(val).trim() || null;
@@ -626,7 +630,6 @@ app.post("/api/singleDataEntryFaculty", async (req, res) => {
 
     const { name, empid, photo_url, email, school } = req.body;
 
-    // Required field validation
     if (!empid) {
       res.status(400).json({ error: "Employee ID is required." });
       return
@@ -640,25 +643,30 @@ app.post("/api/singleDataEntryFaculty", async (req, res) => {
       school: toNull(school),
     };
 
-    // Additional validation for required fields after sanitization
     if (!sanitizedData.empid) {
       res.status(400).json({ error: "Valid Employee ID is required." });
       return
     }
 
-    const query = `
-      INSERT INTO faculty_table(
-        name, empid, photo_url, email, school
-      )
+    // Check if faculty with empid already exists
+    const checkQuery = `SELECT 1 FROM faculty_table WHERE empid = $1 LIMIT 1`;
+    const checkResult = await pool.query(checkQuery, [sanitizedData.empid]);
+
+    if ((checkResult.rowCount as number) > 0) {
+      res.status(409).json({
+        error: "Faculty with this Employee ID already exists",
+      });
+      return
+    }
+    
+
+    // Insert new faculty
+    const insertQuery = `
+      INSERT INTO faculty_table(name, empid, photo_url, email, school)
       VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (empid) DO UPDATE SET
-        name = EXCLUDED.name,
-        photo_url = EXCLUDED.photo_url,
-        email = EXCLUDED.email,
-        school = EXCLUDED.school
     `;
 
-    await pool.query(query, [
+    await pool.query(insertQuery, [
       sanitizedData.name,
       sanitizedData.empid,
       sanitizedData.photo_url,
@@ -667,23 +675,19 @@ app.post("/api/singleDataEntryFaculty", async (req, res) => {
     ]);
 
     res.status(200).json({
-      message: "Faculty data processed successfully",
+      message: "Faculty data inserted successfully",
       data: sanitizedData,
     });
   } catch (err: any) {
     console.error("Database operation error:", err);
 
-    const errorMessage =
-      err.code === "23505"
-        ? "Faculty with this Employee ID already exists"
-        : "Failed to process faculty data";
-
     res.status(500).json({
-      error: errorMessage,
+      error: "Failed to process faculty data",
       details: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
   }
 });
+
 
 app.post("/delete-grouped-faculties", async (req, res) => {
   const { empids: s_nos } = req.body;
@@ -699,6 +703,7 @@ app.post("/delete-grouped-faculties", async (req, res) => {
 
   try {
     await client.query("BEGIN");
+    await client.query(allocated_courses_creation_query);
 
     // Step 1: Get empids from s_no
     const empidResult = await client.query(
@@ -785,6 +790,7 @@ app.post("/delete-grouped-courses", async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    await client.query(allocated_courses_creation_query);
 
     // Step 1: Get course details from course_table for each ID
     const courseResult = await client.query(

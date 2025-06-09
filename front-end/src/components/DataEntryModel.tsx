@@ -45,7 +45,6 @@ export const DataEntryModal: React.FC<ModalProps> = ({ type, onClose }) => {
     e.preventDefault();
 
     try {
-      console.log(formData);
       const response = await fetch(
         type === "course"
           ? "http://localhost:3001/api/singleDataEntryCourse"
@@ -57,15 +56,28 @@ export const DataEntryModal: React.FC<ModalProps> = ({ type, onClose }) => {
         }
       );
 
-      if (!response.ok) throw new Error("Failed to submit");
+      if (!response.ok) {
+        if (response.status === 500) {
+          // Custom message based on API type
+          const errorMsg =
+            type === "faculty"
+              ? "Faculty with this EmpID already exists."
+              : "Course with this data already exists.";
+          alert(errorMsg);
+        } else {
+          throw new Error("Failed to submit");
+        }
+        return;
+      }
 
       alert("Data submitted successfully");
       onClose(); // close modal
     } catch (err: any) {
       console.error("Error submitting:", err);
-      alert("s_no or empid already exists.");
+      alert("Something went wrong. Please try again.");
     }
   };
+  
   
   return (
     <div
