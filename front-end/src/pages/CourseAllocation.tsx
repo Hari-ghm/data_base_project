@@ -441,6 +441,10 @@ export default function CourseAllocation() {
                                 <button
                                   className="text-indigo-600 hover:text-indigo-900"
                                   onClick={async () => {
+                                    fetchcoursewiseDetails(
+                                      course.courseCode,
+                                      course.stream
+                                    );
                                     const selectSlot = selectedSlot[course.id];
                                     const selectedFacultyId =
                                       selectedFaculties[course.id];
