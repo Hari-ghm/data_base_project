@@ -22,6 +22,6 @@ The application will open in the browser.
 In back-end folder, create a .env file with the following contents  
 ![image](https://github.com/user-attachments/assets/247b59e1-6daf-4cf5-97ff-f29d54d69962)  
 
-In back-end cmd prmpt, type command "npm run dev". Now ur back-end database is connected.
+In back-end cmd prmpt, type command "npm run dev". Now the back-end database is connected.
 
-## Your application is ready to use !!
+## The application is ready to use !!
